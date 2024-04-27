@@ -339,9 +339,13 @@ export function matchTemplate(
         let firstParams = parseTemplate.getFirstParam(params);
         // for 上下文
         if (actionContent.length && listIndex != null) {
-            let { key: for_param, val } = actionContent[actionContent.length - 1] || {};
+            let { key: for_param, val, } = actionContent[actionContent.length - 1] || {};
             if (firstParams === for_param) {
                 parseTemplate.init(params, { [for_param]: data[val][listIndex] });
+                return fn(data, methods);
+            // 解析bind 上下文参数 
+            } else if (parseTemplate.hasFunBindInForContent(params, for_param)) {
+                parseTemplate.init(params, { [for_param]: data[val][listIndex], ...methods });
                 return fn(data, methods);
             }
         }

@@ -41,14 +41,15 @@ export const Stack = {
  * 处理模板{}
  */
 export const ParseTemplate = {
-    init(this: ParseTemplateThis, str: string, data: any, starIndex: number = 0) {
+    init(this: ParseTemplateThis, str: string, data: any, listIndex: number | null = null) {
         this.template = this.parseTemplateParam(str);
         this.originTemplate = str;
         this.data = data;
-        this.starIndex = starIndex;
+        this.listIndex = listIndex;
+        // this.type = ''
     },
 
-    parseTemplateParam(template: string) {
+    parseTemplateParam(template: string): string[] {
         return template.split('.').filter(l => l.trim());
     },
 
@@ -59,16 +60,39 @@ export const ParseTemplate = {
         return this.parseTemplateParam(str)[0];
     },
 
+    hasFunBindInForContent(this: ParseTemplateThis, template: string) {
+        return template.includes('bind(');
+    },
+
+    getFunBindParams(this: ParseTemplateThis) {
+        let s = this.originTemplate;
+        let len = s.length;
+        let [methodName, bindParams] = s.slice(0, len - 1).split('.bind(');
+        
+        let method = this.data[methodName];
+        let data = bindParams.split(',').slice(1).map(res => this.calcMatchData(res.split('.')))
+        return function <T>(this: T) {
+                let _this = this;
+                return method.apply(_this, data);
+            }
+    },
+
+    calcMatchData(this: ParseTemplateThis, params: string[]) {
+        return params
+        .reduce((obj, item) => {
+            let param = item.trim();
+            if (!obj) return this.data[param];
+            
+            return obj[param];
+        }, null);
+    },
+
     // { a.b.c }
     getMatchData(this: ParseTemplateThis) {
-        return this.template
-            .slice(this.starIndex)
-            .reduce((obj, item) => {
-                if (!obj) {
-                    return this.data[item];
-                }
-                return obj[item];
-            }, null);
+        let isFunBind = this.hasFunBindInForContent(this.originTemplate);
+        if (isFunBind) return this.getFunBindParams([]);
+        
+        return this.calcMatchData(this.template);
     }
 }
 

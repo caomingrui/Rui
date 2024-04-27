@@ -61,6 +61,9 @@ const Example = Component((instance, props) => {
       //     .concat({ id: 9, data: '9999999999999999999' })
       //     .concat(cloneList.slice(2));
   }
+  methods.testBind = function(...item: any) {
+    console.log(item);
+  }
 
   return (`
                   <div>
@@ -76,7 +79,7 @@ const Example = Component((instance, props) => {
                           <div :key="item.id">
                               { item.data } -- {item.a} - {item.c.b.c.d} - {number} --- {bool}
                               <p>{bool}-123--{number} - { item.id }</p>
-                              <p :class="spanClass">我是update class</p>
+                              <p :class="spanClass" @click="testBind.bind(null, item.id, item.a)">我是update class</p>
                           </div>
                       </div>
                       <p @click="test">123</p>
