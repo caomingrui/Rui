@@ -7,10 +7,15 @@ import {
 const Child = Component((instance) => {
     const {
         data,
-        methods
+        methods,
+        useMounted
     } = instance.init(reaction({
         counnt: 0
     }))
+
+    useMounted(() => {
+        console.log('Child -- render =====================>>');
+    })
     methods.handleTest = function() {
         data.counnt += 1;
     }
@@ -45,15 +50,14 @@ const Example = Component((instance, props) => {
   });
   const {
       methods,
-      onMount
+      useMounted
   } = instance.init(() => ({
     data,
     components: { Child }
   }));
 
-  onMount(() => {
-      console.log('onMount ================>>', props);
-      (window as any).da = data;
+  useMounted(() => {
+      console.log('Example -- onMount ================>>', props);
   });
 
   methods.handleSum = () => {

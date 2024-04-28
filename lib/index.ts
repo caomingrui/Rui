@@ -16,26 +16,40 @@ export function doWatch(source: any, callback: any) {
 }
 
 
+enum CycleCallbackFunctionEnum {
+    useBefored = "useBefored",
+    useMounted = "useMounted",
+    useUpdated = "useUpdated",
+    useUnmounted = "useUnmounted",
+}
 
 
 type ComponrntProps = {
     data: any;
     methods: any;
-    onMount: (cb: (...args: any[]) => void) => void;
     components?: Record<string, any>;
     init: (initData: Record<string, any> | (() => ComponrntProps)) => ComponrntProps
+} & {
+    [k in CycleCallbackFunctions]?: (cb: () => void) => void;
 }
+
+
+export type CycleCallbackFunctions = keyof typeof CycleCallbackFunctionEnum
+
+ export type CycleCallbacks = {
+    -readonly [k in CycleCallbackFunctions]?: () => void
+}
+
 
 export function Component(callback: (
     instance: ComponrntProps, 
     props: any
 ) => string): Function {
+    let cycleCallbacks: CycleCallbacks = {};
+
     let instance: ComponrntProps = {
         data: {},
         methods: {},
-        onMount: (cb: (...args: any[]) => void) => {
-            cb && cb();
-        },
         init(initData) {
             let methodsObj: any = {}, proxy = initData;
             if (isFunction(initData)) {
@@ -59,11 +73,19 @@ export function Component(callback: (
         }
     };
 
+    let funs = Object.keys(CycleCallbackFunctionEnum) as CycleCallbackFunctions[];
+    funs.forEach(fun => {
+        instance[fun] = function(cb: () => void) {
+            cycleCallbacks[fun] = cb;
+        }
+    })
+
     const h = (props: any) => viewRender(
         callback(instance, props),
         instance.data,
         instance.methods,
-        instance.components
+        instance.components,
+        cycleCallbacks
     );
     h.__type = ComponentKey
     return h;

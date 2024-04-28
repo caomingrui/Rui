@@ -4,7 +4,7 @@ import {
     UpdateTextFlags,
     UpdateAttributeFlags
 } from "../proxyBonding/flages";
-import { isFunction, isNumber, ParseTemplate, Stack } from "../utils";
+import { isFunction, isNumber, ParseTemplate, runWithCycleCallback, Stack } from "../utils";
 import {  
     ComponentKey,
     componentMap, 
@@ -100,6 +100,8 @@ export const DOM = {
         }
 
         componentMap.set(componentId, data);
+
+        runWithCycleCallback(data.onCycleCallbacks, 'useBefored');
     },
 
     endComponent(
@@ -116,7 +118,14 @@ export const DOM = {
         let componentId = getElementIdToTemplateId(id);
         let componentRecord = componentMap.get(componentId);
         if (componentRecord) {
-            componentRecord.insertElem.appendChild(componentRecord.elem);
+            const {
+                insertElem,
+                onCycleCallbacks,
+                elem,
+            } = componentRecord;
+            insertElem.appendChild(elem);
+
+            runWithCycleCallback(onCycleCallbacks, 'useMounted');
         }
     },
 

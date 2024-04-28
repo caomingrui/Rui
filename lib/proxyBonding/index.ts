@@ -1,3 +1,4 @@
+import { CycleCallbacks } from '..';
 import { actionContent, getActionElementId, getElementIdToTemplateId, getElementInProgress } from '../domBonding';
 import { Responsive, wasmPacth, wasmParse, wasmRender } from '../paseHtmleTemplate/wasm';
 import type { 
@@ -21,6 +22,7 @@ export const componentMap: Map<
     string,
     ComponentMapType
 > = new Map();
+
 export const ComponentKey = Symbol('RuiComponent');
 
 let activeEffect: null | ReactiveEffectType = null;
@@ -377,7 +379,8 @@ export function viewRender(
     template: string,
     data: any,
     methods: Record<string, any>,
-    components: Record<string, any> | null = null
+    components: Record<string, any> | null = null,
+    onCycleCallbacks?: CycleCallbacks
 ) {
     let templateID;
     if (!data.__KEY) {
@@ -386,6 +389,7 @@ export function viewRender(
         const componentMess: any = {
             data,
             methods: new Proxy(methods, proxyErrorHandlers),
+            onCycleCallbacks,
             // elem: starElement,
             // deps: new Set(),
             // listDeps: new Map(),

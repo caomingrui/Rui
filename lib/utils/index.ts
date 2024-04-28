@@ -1,4 +1,6 @@
+import { CycleCallbackFunctions, CycleCallbacks } from '..';
 import type { ParseTemplateThis } from '../types/paseHtmlTemplate'
+import { promise } from './scheduler';
 
 
 export function isObject<T>(obj: T): boolean {
@@ -103,4 +105,20 @@ export function generateRandomHash(length: number) {
     crypto.getRandomValues(randomBytes);
     const hashArray = Array.from(randomBytes);
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+
+
+export function runWithCycleCallback(onCycleCallbacks: CycleCallbacks, funName: CycleCallbackFunctions) {
+    if (
+        onCycleCallbacks && 
+        onCycleCallbacks.hasOwnProperty(funName)
+    ) {
+        let cb = onCycleCallbacks[funName];
+        if (cb && isFunction(cb)) {
+            promise.then(cb).catch(rej => {
+                console.error(`[${funName}] ==>`,rej);
+            });
+        }
+    }
 }

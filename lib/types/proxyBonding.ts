@@ -1,3 +1,5 @@
+import { CycleCallbacks } from ".."
+
 export type ForContent = { key: string, val: string, id: string }
 export type Dep = {
     target: any,
@@ -51,4 +53,7 @@ export type ComponentMapType = {
     deps: Set<any>
     listDeps: Map<string, ListTemplateListType>
     components?: Record<string, any> | null
+
+
+    onCycleCallbacks: CycleCallbacks
 }
