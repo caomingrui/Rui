@@ -4,6 +4,24 @@ import {
   reaction
 } from '../lib/index';
 
+const Child = Component((instance) => {
+    const {
+        data,
+        methods
+    } = instance.init(reaction({
+        counnt: 0
+    }))
+    methods.handleTest = function() {
+        data.counnt += 1;
+    }
+    return (`
+    <div>
+        <p>{counnt}</p>
+        <p @click="handleTest>test</p>
+    </div>
+`)
+})
+
 // 示例
 const Example = Component((instance, props) => {
   const data = reaction({
@@ -28,7 +46,10 @@ const Example = Component((instance, props) => {
   const {
       methods,
       onMount
-  } = instance.init(data);
+  } = instance.init(() => ({
+    data,
+    components: { Child }
+  }));
 
   onMount(() => {
       console.log('onMount ================>>', props);
@@ -54,20 +75,15 @@ const Example = Component((instance, props) => {
   }
   methods.test = function () {
       let cloneList = [...data.list];
-      // da.list = cloneList.slice(2,3)
       data.list = [cloneList[3], cloneList[2], cloneList[0], cloneList[1]]
-      // da.list = cloneList.concat({ id: 9, data: 999 })
-      // data.list = cloneList.slice(0, 2)
-      //     .concat({ id: 9, data: '9999999999999999999' })
-      //     .concat(cloneList.slice(2));
   }
   methods.testBind = function(...item: any) {
     console.log(item);
   }
 
   return (`
-                  <div>
-                      <button class="mt-but error mr_10" @click="handleSum">累加
+                  <div>         
+                     <button class="mt-but error mr_10" @click="handleSum">累加
                           (<span>{computeTest}--劳资蜀道-{number}</span>)
                       </button>
                       <button class="mt-but" @click="handleCancelDel">显示隐藏</button>
@@ -82,7 +98,10 @@ const Example = Component((instance, props) => {
                               <p :class="spanClass" @click="testBind.bind(null, item.id, item.a)">我是update class</p>
                           </div>
                       </div>
-                      <p @click="test">123</p>
+                      <p @click="test"><span>123</span></p>
+                      <Child></Child>
+                      <p>123123123</p>
                   </div>`)
 });
+
 Example({ data: '???' });

@@ -1,5 +1,5 @@
-import { baseHandlers, targetMap, viewRender } from "./proxyBonding";
-import { isObject } from "./utils";
+import { ComponentKey, baseHandlers, targetMap, viewRender } from "./proxyBonding";
+import { isFunction, isObject } from "./utils";
 
 export function reaction<T>(data: T) {
     if (!data) throw new Error("data is not")
@@ -16,34 +16,55 @@ export function doWatch(source: any, callback: any) {
 }
 
 
-export function Component(callback: (instance: any, props: any) => string): Function {
-    let instance = {
+
+
+type ComponrntProps = {
+    data: any;
+    methods: any;
+    onMount: (cb: (...args: any[]) => void) => void;
+    components?: Record<string, any>;
+    init: (initData: Record<string, any> | (() => ComponrntProps)) => ComponrntProps
+}
+
+export function Component(callback: (
+    instance: ComponrntProps, 
+    props: any
+) => string): Function {
+    let instance: ComponrntProps = {
         data: {},
         methods: {},
-        init(proxy: any) {
-            this.data = proxy;
-            let o: any = {};
-            this.methods = new Proxy(o, {
+        onMount: (cb: (...args: any[]) => void) => {
+            cb && cb();
+        },
+        init(initData) {
+            let methodsObj: any = {}, proxy = initData;
+            if (isFunction(initData)) {
+                // @ts-ignore
+                let {data, methods = {}, components = {}} = initData();
+                this.data = proxy = data;
+                this.methods = methodsObj = methods;
+                this.components = components;
+                console.log(components)
+            } else {
+                this.data = initData;
+            }
+            
+            this.methods = new Proxy(methodsObj, {
                 set: (target, key, value) => {
-                    if (target[key] != value) {
-                        target[key] = value;
-                    }
+                    target[key] = value;
                     return true;
                 }
             })
-            return {
-                data: proxy,
-                methods: this.methods,
-                onMount: (cb: (...args: any[]) => void) => {
-                    cb && cb();
-                },
-            }
+            return this as ComponrntProps
         }
     };
 
-    return (props: any) => viewRender(
+    const h = (props: any) => viewRender(
         callback(instance, props),
         instance.data,
-        instance.methods
-    )
+        instance.methods,
+        instance.components
+    );
+    h.__type = ComponentKey
+    return h;
 }

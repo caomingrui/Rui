@@ -1,4 +1,4 @@
-import { actionContent, fragment, getActionElementId, getElementIdToTemplateId, setElementInProgress } from '../domBonding';
+import { actionContent, getActionElementId, getElementIdToTemplateId, getElementInProgress } from '../domBonding';
 import { Responsive, wasmPacth, wasmParse, wasmRender } from '../paseHtmleTemplate/wasm';
 import type { 
     ReactiveEffectType,
@@ -11,6 +11,7 @@ import type {
 import { ParseTemplate, generateRandomHash, isPromise } from '../utils';
 import scheduler, { promise } from '../utils/scheduler';
 
+
 export const targetMap: WeakMap<
     Object,
     Map<string, Set<ReactiveEffectType>>
@@ -20,6 +21,7 @@ export const componentMap: Map<
     string,
     ComponentMapType
 > = new Map();
+export const ComponentKey = Symbol('RuiComponent');
 
 let activeEffect: null | ReactiveEffectType = null;
 
@@ -371,26 +373,40 @@ const proxyErrorHandlers = {
 }
 
 
-export async function viewRender(
+export function viewRender(
     template: string,
     data: any,
-    methods: Record<string, any>
+    methods: Record<string, any>,
+    components: Record<string, any> | null = null
 ) {
     let templateID;
-
     if (!data.__KEY) {
         templateID = generateRandomHash(16);
-        let starElement = document.createTextNode("");
-        componentMap.set(templateID, {
+        
+        const componentMess: any = {
             data,
             methods: new Proxy(methods, proxyErrorHandlers),
-            elem: starElement,
-            deps: new Set(),
-            listDeps: new Map()
-        });
-        setElementInProgress(starElement);
+            // elem: starElement,
+            // deps: new Set(),
+            // listDeps: new Map(),
+            elem: null,
+            components
+        }
+        
+        let elementInProgress = getElementInProgress();
+        console.log(elementInProgress, 'render')
+        if (!elementInProgress) {
+            // let starElement = document.createTextNode("");
+            // document.body.appendChild(starElement);
+            // componentMess.elem = starElement;
+            // setElementInProgress(starElement);
+        } else {
+            componentMess.elem = elementInProgress;
+        }
+        componentMap.set(templateID, componentMess);
+        
         data.__KEY = templateID;
-        fragment.appendChild(starElement);
+        // fragment.appendChild(starElement);
     } else {
         templateID = data.__KEY;
     }
@@ -402,7 +418,7 @@ export async function viewRender(
     console.log(stack);
 
     function updateComponent(updates: Dep[]) {
-        console.log("本轮updates ==> ", updates);
+        console.log("本轮updates ==> ", updates, getElementInProgress());
         if (updates.length) {
             // @ts-ignore
             componentMap.set('_lastUpdate', [...updates]);
@@ -417,8 +433,11 @@ export async function viewRender(
             prevStack && wasmPacth(prevStack, updates.map(l => l.id).join('>>>'))
         }
         oldStack = prevStack;
+        
     }
 
     let effect = new ReactiveEffect(updateComponent);
     effect.run();
+
+    return data.__KEY;
 }

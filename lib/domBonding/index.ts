@@ -6,6 +6,7 @@ import {
 } from "../proxyBonding/flages";
 import { isFunction, isNumber, ParseTemplate, Stack } from "../utils";
 import {  
+    ComponentKey,
     componentMap, 
     patchList, 
     renderList,
@@ -15,11 +16,12 @@ import type {
     ElementType,
     ListTemplateDepType,
     Dep,
-    ForContent
+    ForContent,
+    ComponentMapType
 } from '../types/proxyBonding';
 
 // 待改
-export const fragment = document.createDocumentFragment();
+export const createFragment = () => document.createDocumentFragment();
 let elementInProgress: null | any = null;
 let elementForInProgress: null | any = null;
 
@@ -63,7 +65,6 @@ for_list.isForChild = function(data: ElementType) {
         }
         return false;
     }
-
     first.child.push(data);
     return true;
 }
@@ -76,6 +77,49 @@ for_list.match_v_for = function(elem: any, data: ElementType) {
 }
 
 export const DOM = {
+    
+    startComponent(elementId: string) {
+        let componentId = getElementIdToTemplateId(elementId);
+        let componentRecord = componentMap.get(componentId);
+        let starElement = document.createDocumentFragment();
+
+        if (!componentRecord) return;
+
+        const data: ComponentMapType = {
+            ...componentRecord,
+            elem: starElement,
+            deps: new Set(),
+            listDeps: new Map(),
+        }
+        // 组件首次插入
+        if (!elementInProgress) {
+            elementInProgress = starElement;
+            data.insertElem = document.body;
+        } else {
+            data.insertElem = elementInProgress;
+        }
+
+        componentMap.set(componentId, data);
+    },
+
+    endComponent(
+        tag: string,
+        props: string,
+        id: string,
+        parent: string  | null,
+        text: string,
+        index: number
+    ) {
+        if (elementInProgress.__KEY != id) {
+            this.createElement(tag, props, id, parent, text, index);
+        }
+        let componentId = getElementIdToTemplateId(id);
+        let componentRecord = componentMap.get(componentId);
+        if (componentRecord) {
+            componentRecord.insertElem.appendChild(componentRecord.elem);
+        }
+    },
+
     createElement(
         tag: string,
         props: string,
@@ -84,17 +128,18 @@ export const DOM = {
         text: string,
         index: number
     ) {
-        const records = {tag, props, id, parent, text, index};
+        const records = { tag, props, id, parent, text, index };
         if (!parent) {
-            let elem = createVNodeElm(tag, props,  text, id);
-            elementInProgress.parentNode.insertBefore(elem, elementInProgress);
+            let elem = createVNodeElm(tag, props,  text, id, 'NULL');
+            // elementInProgress.parentNode.insertBefore(elem, elementInProgress);
+            elementInProgress.appendChild(elem);
             elementInProgress = elem;
         } else {
             //  收集v-for子节点
             if (for_list.isForChild(records)) return JumpUpdateForChildFlags;
-
             if (elementInProgress.__KEY === parent) {
-                let elem = createVNodeElm(tag, props, text, id);
+                let elem = createVNodeElm(tag, props, text, id, parent);
+                if (!elem) return;
                 // v-for
                 if (for_list.match_v_for(elem, records)) {
                     elementInProgress.appendChild(elem);
@@ -106,7 +151,8 @@ export const DOM = {
             }
             else {
                 let parentElem = matchParent(parent);
-                let elem = createVNodeElm(tag, props, text, id);
+                let elem = createVNodeElm(tag, props, text, id, parent);
+                if (!elem) return;
                 // v-for
                 if (for_list.match_v_for(elem, records)) {
                     elementInProgress = parentElem;
@@ -124,13 +170,13 @@ export const DOM = {
     createForChild(container: any, data: any) {
         let { tag, props, id, parent, text, listIndex, achor } = data;
         if (elementForInProgress.__KEY === parent) {
-            let elem = createVNodeElm(tag, props, text, id, listIndex);
+            let elem = createVNodeElm(tag, props, text, id, parent, listIndex);
             elementForInProgress.appendChild(elem);
             elementForInProgress = elem;
         }
         else {
             let parentElem = matchParent(parent, elementForInProgress);
-            let elem = createVNodeElm(tag, props, text, id, listIndex);
+            let elem = createVNodeElm(tag, props, text, id, parent, listIndex);
             if (achor) {
                 parentElem.insertBefore(elem, achor);
             } else {
@@ -261,8 +307,6 @@ export const DOM = {
     find() {}
 }
 
-
-
 function matchParent(parentId: string, elem = elementInProgress): Element {
     if (elem.__KEY === parentId) {
         return elem;
@@ -303,6 +347,7 @@ export function matchTemplateString(id: string, params: string) {
 
     return innerText;
 }
+
 
 
 export function matchTemplate(
@@ -371,6 +416,7 @@ export function createVNodeElm(
     props: string,
     text: string,
     id: string,
+    parent: string,
     listIndex: null | number = null
 ) {
     let elem: any;
@@ -384,10 +430,11 @@ export function createVNodeElm(
             elemSetTemplate(elem, id, UpdateTextFlags);
             break;
         default:
-            elem = document.createElement(tag);
+            elem = createElement(tag, id, parent);
             break;
     }
 
+    if (!elem) return elem;
     elem.__KEY = id;
     if (listIndex != null) {
         elem.listIndex = listIndex
@@ -401,6 +448,38 @@ export function createVNodeElm(
 }
 
 
+function createElement(tagName: string, id: string, parent: string) {
+    let Component = matchChildTag(id, tagName);
+    
+    if (isFunction(Component) && Component.__type === ComponentKey) {
+        try {
+            const parentElem = matchParent(parent);
+            elementInProgress = parentElem;
+            Component();
+        }
+        catch (error) {
+            console.error(error);
+        }
+        finally {
+            return null;
+        }
+    } else {
+        return document.createElement(tagName);
+    }
+}
+
+
+export function matchChildTag(id: string, tagName: string) {
+    let templateID = getElementIdToTemplateId(id);
+    if (!templateID || !tagName) return null;
+    let data  = componentMap.get(templateID);
+    if (data && data.components) {
+        let components = data.components;
+        return tagName in components? components[tagName]: tagName ;
+    }
+    return tagName;
+}
+
 
 function elemSetTemplate(element: HTMLElement | Text, id: string, flags: number) {
     addElementFlags(element, flags);
@@ -409,9 +488,4 @@ function elemSetTemplate(element: HTMLElement | Text, id: string, flags: number)
     if (templateData) {
         templateData.deps.add(element);
     }
-}
-
-
-window.onload = function() {
-    document.body.appendChild(fragment)
 }

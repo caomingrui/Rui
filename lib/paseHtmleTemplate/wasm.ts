@@ -1,4 +1,4 @@
-import { DOM } from "../domBonding";
+import { DOM, getElementInProgress } from "../domBonding";
 import { 
     JumpUpdateForChildFlags, 
     UpdateAttributeFlags, 
@@ -272,6 +272,7 @@ export class Responsive {
 }
 
 // let lastList = null;
+let lastElement: Record<string, any> = {};
 function dfs(
     data: CreateElement,
     parent: string | null,
@@ -297,6 +298,15 @@ function dfs(
     // }
 
     // console.log(primaryFlags, UpdateForListFlags, lastList, data, parent, '==============================>>>')
+
+    lastElement = {
+        tagName, 
+        props, 
+        KEY, 
+        parent, 
+        text, 
+        index
+    }
     switch(primaryFlags) {
         case UpdateTextFlags:
             change.push(new Responsive('text', data));
@@ -322,7 +332,7 @@ function dfs(
         default:
             break;
     }
-
+    
     for (let i = 0; i < len; i ++) {
         dfs(
             child[i],
@@ -335,8 +345,18 @@ function dfs(
 
 export function wasmRender(elem: CreateElement) {
     let change: Responsive[] = [];
+    console.log(getElementInProgress(), elem)
+    DOM.startComponent(elem.KEY);
     // first render
     dfs(elem, null, 0, change);
+    console.log(getElementInProgress(), elem, lastElement);
+    DOM.endComponent(
+        lastElement.tagName || '',
+        lastElement.props, 
+        lastElement.KEY, 
+        elem.KEY, 
+        lastElement.text,
+        lastElement.index);
     return change;
 }
 

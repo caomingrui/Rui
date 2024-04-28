@@ -47,6 +47,8 @@ export type ComponentMapType = {
     data: any
     methods: any
     elem: any
+    insertElem: any
     deps: Set<any>
     listDeps: Map<string, ListTemplateListType>
+    components?: Record<string, any> | null
 }
