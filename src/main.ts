@@ -20,11 +20,11 @@ const Child = Component((instance) => {
         data.counnt += 1;
     }
     return (`
-    <div>
-        <p>{counnt}</p>
-        <p @click="handleTest>test</p>
-    </div>
-`)
+        <div>
+            <p>num: {counnt}</p>
+            <button @click="handleTest>Child num ++</button>
+        </div>
+    `)
 })
 
 // 示例
@@ -85,27 +85,38 @@ const Example = Component((instance, props) => {
     console.log(item);
   }
 
-  return (`
-                  <div>         
-                     <button class="mt-but error mr_10" @click="handleSum">累加
-                          (<span>{computeTest}--劳资蜀道-{number}</span>)
-                      </button>
-                      <button class="mt-but" @click="handleCancelDel">显示隐藏</button>
-                      <p>{ name }--{dels.a.b}</p>
-                      <span :class="spanClass">test - { bool }</span>
-                      <p v-if="bool">我是bool-v-if</p>
-                      <p v-show="bool">我是bool-v-show</p>
-                      <div v-for="item in list">
-                          <div :key="item.id">
-                              { item.data } -- {item.a} - {item.c.b.c.d} - {number} --- {bool}
-                              <p>{bool}-123--{number} - { item.id }</p>
-                              <p :class="spanClass" @click="testBind.bind(null, item.id, item.a)">我是update class</p>
-                          </div>
-                      </div>
-                      <p @click="test"><span>123</span></p>
-                      <Child></Child>
-                      <p>123123123</p>
-                  </div>`)
+  return (`<div>                             
+                <button class="mt-but error mr_10" @click="handleSum">累加
+                (<span>{computeTest}--劳资蜀道-{number}</span>)
+                </button>
+                <button class="mt-but" @click="handleCancelDel">显示隐藏</button>
+                <p>{ name }--{dels.a.b}</p>
+                <span :class="spanClass">test - { bool }</span>
+                <p v-if="bool">我是bool-v-if</p>
+                <p v-show="bool">我是bool-v-show</p>
+                <div v-for="item in list">
+                    <div :key="item.id">
+                        { item.data } -- {item.a} - {item.c.b.c.d} - {number} --- {bool}
+                        <p>{bool}-123--{number} - { item.id }</p>
+                        <button :class="spanClass" @click="testBind.bind(null, item.id, item.a)">获取列表item</button>
+                        <Child></Child>
+                        <p>{ bool }</p>
+                    </div>
+                </div>
+                
+        </div>`)
 });
 
+
+
+
+// { item.data } -- {item.a} - {item.c.b.c.d} - {number} --- {bool}
+//                               <p>{bool}-123--{number} - { item.id }</p>
+//                               <p :class="spanClass" @click="testBind.bind(null, item.id, item.a)">我是update class</p>
+
+
+
+//                               <p @click="test"><span>123</span></p>
+//                       <Child></Child>
+//                       <p>123123123</p>
 Example({ data: '???' });

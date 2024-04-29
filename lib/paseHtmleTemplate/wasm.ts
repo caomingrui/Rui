@@ -345,11 +345,11 @@ function dfs(
 
 export function wasmRender(elem: CreateElement) {
     let change: Responsive[] = [];
-    console.log(getElementInProgress(), elem)
+    // console.log(getElementInProgress(), elem)
     DOM.startComponent(elem.KEY);
     // first render
     dfs(elem, null, 0, change);
-    console.log(getElementInProgress(), elem, lastElement);
+    // console.log(getElementInProgress(), elem, lastElement);
     DOM.endComponent(
         lastElement.tagName || '',
         lastElement.props, 
@@ -369,7 +369,7 @@ export function wasmPacth(current: Responsive[], updatesStr: string) {
 
 function diff2(current: Responsive[], updates: string[]) {
     let len = current.length;
-    console.log(current, updates, 'diff')
+    // console.log(current, updates, 'diff')
     for (let i = 0; i < len; i++) {
         let { type, data } = current[i];
 

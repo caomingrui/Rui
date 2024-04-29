@@ -44,7 +44,8 @@ export const baseHandlers = {
 
 
 function track(target: any, key: any, value: any) {
-    let actionElementId = getActionElementId()
+    let actionElementId = getActionElementId();
+    
     if (activeEffect && actionElementId) {
         let depsMap = targetMap.get(target);
         if (!depsMap) {
@@ -60,8 +61,9 @@ function track(target: any, key: any, value: any) {
          * 比如 列表中使用 {name}, 那么getter会收集 name -> item 的关联
          * actionContent 就是循环块上下文
          */
-        if (actionContent.length) {
-            let data = actionContent[actionContent.length - 1] || {};
+        // console.log(key, actionElementId, activeEffect, actionContent);
+        let data = actionContent[actionContent.length - 1] || {};
+        if (data.type === 'for') {
             activeEffect.addDeps({
                 target,
                 key,
@@ -422,7 +424,7 @@ export function viewRender(
     console.log(stack);
 
     function updateComponent(updates: Dep[]) {
-        console.log("本轮updates ==> ", updates, getElementInProgress());
+        console.log("本轮updates ==> ", prevStack, updates, getElementInProgress());
         if (updates.length) {
             // @ts-ignore
             componentMap.set('_lastUpdate', [...updates]);
@@ -436,6 +438,7 @@ export function viewRender(
             // wasm
             prevStack && wasmPacth(prevStack, updates.map(l => l.id).join('>>>'))
         }
+        console.log(prevStack);
         oldStack = prevStack;
         
     }

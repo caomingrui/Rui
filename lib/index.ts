@@ -23,15 +23,17 @@ enum CycleCallbackFunctionEnum {
     useUnmounted = "useUnmounted",
 }
 
+type ComponentCycleCallback = {
+    [k in CycleCallbackFunctions]: (cb: () => void) => void;
+};
 
-type ComponrntProps = {
+
+type ComponrntProps<Optional extends boolean = true> = {
     data: any;
     methods: any;
     components?: Record<string, any>;
     init: (initData: Record<string, any> | (() => ComponrntProps)) => ComponrntProps
-} & {
-    [k in CycleCallbackFunctions]?: (cb: () => void) => void;
-}
+} & (Optional extends true ? ComponentCycleCallback : Partial<ComponentCycleCallback>);
 
 
 export type CycleCallbackFunctions = keyof typeof CycleCallbackFunctionEnum
@@ -40,14 +42,13 @@ export type CycleCallbackFunctions = keyof typeof CycleCallbackFunctionEnum
     -readonly [k in CycleCallbackFunctions]?: () => void
 }
 
-
 export function Component(callback: (
     instance: ComponrntProps, 
     props: any
 ) => string): Function {
     let cycleCallbacks: CycleCallbacks = {};
 
-    let instance: ComponrntProps = {
+    let instance: ComponrntProps<false> = {
         data: {},
         methods: {},
         init(initData) {
@@ -81,7 +82,7 @@ export function Component(callback: (
     })
 
     const h = (props: any) => viewRender(
-        callback(instance, props),
+        callback((instance as ComponrntProps), props),
         instance.data,
         instance.methods,
         instance.components,

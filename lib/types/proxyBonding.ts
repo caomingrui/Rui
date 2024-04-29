@@ -1,12 +1,14 @@
 import { CycleCallbacks } from ".."
 
-export type ForContent = { key: string, val: string, id: string }
+export type ForContent = { key: string, val: string, id: string, type: string }
 export type Dep = {
     target: any,
     key: string,
     value: any,
     content: Partial<ForContent>,
     id: string
+
+    
 }
 
 export type ListTemplateDepType = {

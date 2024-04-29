@@ -8,7 +8,7 @@ export function parseProps(container: any, props_s: string, isFirst = true) {
 
     // 是否存在响应式数据
     let isResponsiveElem = false;
-
+    // console.log(props_s,container, container.__KEY, isFirst,'========>>')
     for (let i = 0; i < props_list.length; i+=2) {
         let key = props_list[i].substring(0, props_list[i].indexOf('=')).trim();
         let value = props_list[i + 1].trim();
@@ -16,12 +16,12 @@ export function parseProps(container: any, props_s: string, isFirst = true) {
         const { fn: matchEvent, data: matchText } = match || {};
         let firstKey = key.slice(0, 1), twoKey = key.slice(0, 2);
         // match event
-        if (firstKey === '@' && isFirst && matchEvent) {
-            initializeEvent(container, key.slice(1), matchEvent);
+        if (firstKey === '@' && matchEvent) {
+            isFirst && initializeEvent(container, key.slice(1), matchEvent);
         }
         // match event
-        else if (twoKey === 'on' && isFirst && matchEvent) {
-            initializeEvent(container, key.slice(2), matchEvent);
+        else if (twoKey === 'on' && matchEvent) {
+            isFirst && initializeEvent(container, key.slice(2), matchEvent);
         }
         // attr
         else {
@@ -47,7 +47,7 @@ export function parseProps(container: any, props_s: string, isFirst = true) {
                 let old = container.getAttribute(k);
                 if (old === v) continue;
             }
-
+            // console.log(container, props_s, k, v, isFirst, matchEvent);
             container.setAttribute(k, v);
         }
     }
