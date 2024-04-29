@@ -45,21 +45,17 @@ for_list.isForChild = function(data: ElementType) {
     if (data.parent === first.parent) {
         let el = first.el;
         elementForInProgress = el;
-        let {child, ...args} = this.stack.pop();
-        let {data, key, val} = el.__v_for;
+        let { child } = this.stack.pop();
+        let { data, key, val } = el.__v_for;
         // let cloneActiveEffect = activeEffect;
         el.__v_originChild = child.slice();
         // 过滤for child循环收集依赖
         try {
             // activeEffect = null;
-            actionContent.push({key, val, id: el.__KEY, type: 'for'});
-            console.log('list render START----------->>', child, el, data, key, args);
-            let dd = renderList(child, data, key);
-            console.log(dd)
-            dd.forEach(c => {
+            actionContent.push({ key, val, id: el.__KEY, type: 'for' });
+            renderList(child, data, key).forEach(c => {
                 DOM.createForChild(el, c);
             });
-            console.log('list render END----------->>');
         }
         finally {
             actionContent.pop();
@@ -98,7 +94,6 @@ export const DOM = {
             elementInProgress = starElement;
             data.insertElem = document.body;
         } else {
-            console.log(elementInProgress.__KEY)
             elementInProgress.__type = ComponentKey;
             data.insertElem = elementInProgress;
         }
@@ -228,15 +223,12 @@ export const DOM = {
                             next = next.parentNode;
                         }
                     }
+                    // id 不同，跳过子组件
                     else if (getElementIdToTemplateId(nextSibling?.__KEY || '') != getElementIdToTemplateId(elementForInProgress?.__KEY)) {
                         next = nextSibling;
                         nextSibling = null;
                     }
                 }
-                // if (getElementIdToTemplateId(nextSibling?.__KEY || '') != getElementIdToTemplateId(elementForInProgress?.__KEY)) {
-                //     nextSibling = nextSibling.parentNode
-                // }
-                // console.log(elementForInProgress, nextSibling)
                 childNodes = elementForInProgress = nextSibling;
             }
         }
@@ -245,7 +237,6 @@ export const DOM = {
             childNodes.listIndex = listIndex;
         }
 
-        // console.log(childNodes.__KEY, id, props)
         // 更新 Attr
         if (props && childNodes.__KEY === id) parseProps(childNodes, props, false);
 
@@ -260,14 +251,9 @@ export const DOM = {
         const [originChildIndex, index] = indexMess;
         for (let i = 0; i < deps.length; i++) {
             let { text: depName, lineIndex: depLineIndex, } = deps[i];
-            // if (text === depName) {
-            //     console.log(deps, text, childNodes, '............')
-            // }
-            
             if (text === depName && (index % originChildIndex === depLineIndex)) {
                 let data = componentMap.get(getElementIdToTemplateId(id));
                 if (data) {
-                    console.log(childNodes)
                     childNodes.nodeValue = data.data[depName];
                 }
             }
@@ -321,9 +307,7 @@ export const DOM = {
                 if (!forDeps) return;
                 let deps = forDeps.list
                     .filter(l => lastUpdates.find(d => d.key === l.text));
-                let d = renderList(originChild, newList, key, star);
-                console.log(d);
-                d.forEach((c, ind) => {
+                renderList(originChild, newList, key, star).forEach((c, ind) => {
                     DOM.updateForChild(activeEl, c, deps, [originChild.length, ind]);
                 });
             }
@@ -418,7 +402,6 @@ export function matchTemplate(
         if (actionContent.length && listIndex != null) {
             let { key: for_param, val, } = actionContent[actionContent.length - 1] || {};
             if (firstParams === for_param) {
-                console.log(data,  id, listIndex, params, [...actionContent])
                 parseTemplate.init(params, { [for_param]: data[val][listIndex] });
                 return fn(data, methods);
             // 解析bind 上下文参数 
@@ -483,13 +466,11 @@ export function createVNodeElm(
 
 function createElement(tagName: string, id: string, parent: string) {
     let Component = matchChildTag(id, tagName);
-    // console.log(Component, tagName, id, parent,  elementInProgress,  elementForInProgress,elementInProgress.__KEY,'....................')
     if (isFunction(Component) && Component.__type === ComponentKey) {
         try {
             const parentElem = matchParent(parent, !!actionContent.length? elementForInProgress: elementInProgress );
-            console.log(parentElem)
             elementInProgress = parentElem;
-            actionContent.push({ type: 'component', key: 'string', val: 'string', id: 'string' });
+            actionContent.push({ type: 'component', key: id, val: 'null', id: 'null' });
             Component();
         }
         catch (error) {

@@ -410,9 +410,7 @@ export function viewRender(
             componentMess.elem = elementInProgress;
         }
         componentMap.set(templateID, componentMess);
-        
         data.__KEY = templateID;
-        // fragment.appendChild(starElement);
     } else {
         templateID = data.__KEY;
     }
@@ -438,7 +436,6 @@ export function viewRender(
             // wasm
             prevStack && wasmPacth(prevStack, updates.map(l => l.id).join('>>>'))
         }
-        console.log(prevStack);
         oldStack = prevStack;
         
     }
