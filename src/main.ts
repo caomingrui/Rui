@@ -1,22 +1,44 @@
 import './style.css'
 import { 
   Component,
+  merge,
   reaction
 } from '../lib/index';
+import { isFunction, isNumber } from '../lib/utils';
+
+function useSetCount() {
+    const data = reaction({
+        count: 5
+    });
+
+    const setCount = function(cb: Function | number) {
+        if (isFunction(cb)) {
+            //  @ts-ignore
+            data.count = cb(data.count);
+        } else if (isNumber(cb)) {
+            data.count = cb;
+        }
+    }
+
+    return [data, setCount]
+}
+
 
 const Child = Component((instance) => {
+    const state = reaction({
+        counnt: 0
+    });
+    const [countState, setCount] = useSetCount();
     const {
         data,
         methods,
         useMounted,
         useUpdated,
         useUnmounted
-    } = instance.init(reaction({
-        counnt: 0
-    }))
+    } = instance.init(merge(state, countState))
 
     useMounted(() => {
-        console.log('Child -- render =====================>>');
+        console.log('Child -- render =====================>>', data);
     });
 
     useUpdated(() => {
@@ -30,10 +52,12 @@ const Child = Component((instance) => {
     methods.handleTest = function() {
         data.counnt += 1;
     }
+    methods.setCount = () => setCount((d: number) => d + 1);
     return (`
         <div>
-            <p>num: {counnt}</p>
+            <p>num: {counnt} --- {count}</p>
             <button @click="handleTest>Child num ++</button>
+            <button @click="setCount>Child num ++</button>
         </div>
     `)
 })

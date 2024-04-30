@@ -16,6 +16,26 @@ export function doWatch(source: any, callback: any) {
 }
 
 
+// 合并 proxy
+export function merge(...args: Record<string, any>[]) {
+    const initProxy = args.reduce((o, b) => ({...o, ...b}), {})
+    let handler = {
+        get: (target: any, key: any, receiver: any) => {
+            let proxy = args.find(l => key in l) || args[0];
+            return Reflect.get(proxy, key);
+        },
+        set: (target: any, key: any, value: any) => {
+            let proxy = args.find(l => key in l) || args[0];
+            if (proxy[key] != value) {
+                proxy[key] = value;
+            }
+            return true;
+        }
+    }
+    return new Proxy(initProxy, handler)
+}
+
+
 enum CycleCallbackFunctionEnum {
     useBefored = "useBefored",
     useMounted = "useMounted",

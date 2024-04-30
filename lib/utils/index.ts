@@ -29,8 +29,6 @@ export const Stack = {
     length: 0,
 
     push(data: any) {
-        console.log(data)
-        
         // @ts-ignore
         this.stack.push(data);
         this.length = this.stack.length;
