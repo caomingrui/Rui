@@ -1,4 +1,12 @@
-import { DOM, actionContent, addElementFlags, getElementForInProgress, getElementInProgress, matchParent, matchTemplate, setElementForInProgress, setElementInProgress } from "../domBonding/index.js";
+import { 
+    DOM, 
+    actionContent, 
+    addElementFlags, 
+    getElementInProgress, 
+    matchParent, 
+    matchTemplate, 
+    setElementInProgress 
+} from "../domBonding/index.js";
 import { UpdateForListFlags } from "../proxyBonding/flages.js";
 import { renderList } from "../proxyBonding/index.js";
 import { Stack } from "./index.js";
@@ -76,14 +84,14 @@ export const directPlugins = {
                 
                 setElementInProgress(el);
                 [args].concat(child).forEach(c  => {
-                    const { tag, props, id, parent, text, index } = c;
+                    const { tag, props, id, parent, text, listIndex } = c;
                     DOM.createElement(
                         tag,
                         props,
                         id,
                         parent,
                         text,
-                        index
+                        listIndex
                     )
                 })
             } catch (error) {}
@@ -91,11 +99,9 @@ export const directPlugins = {
                 console.log(getElementInProgress(), args, container.__KEY)
                 let d = getElementInProgress();
                 let e = matchParent(args.id, d);
-                console.log(e);
                 let anchor = document.createTextNode('');
                 anchor.__v_replace = e;
                 e.__v_anchor = anchor;
-                // e.parentNode.replaceChild(anchor, e);
                 setElementInProgress(copyElement);
             }
         }
@@ -139,14 +145,14 @@ export const directPlugins = {
             try {
                 setElementInProgress(el);
                 [args].concat(child).forEach(c  => {
-                    const { tag, props, id, parent, text, index } = c;
+                    const { tag, props, id, parent, text, listIndex } = c;
                     DOM.createElement(
                         tag,
                         props,
                         id,
                         parent,
                         text,
-                        index
+                        listIndex
                     )
                 })
             } catch (error) {}
@@ -216,14 +222,14 @@ export const directPlugins = {
             try {
                 setElementInProgress(el);
                 [args].concat(child).forEach(c  => {
-                    const { tag, props, id, parent, text, index } = c;
+                    const { tag, props, id, parent, text, listIndex } = c;
                     DOM.createElement(
                         tag,
                         props,
                         id,
                         parent,
                         text,
-                        index
+                        listIndex
                     )
                 })
             } catch (error) {}
@@ -254,7 +260,6 @@ export const directPlugins = {
     },
     'v-for': (container: any, data: any, originValue: string) => {
         let [key, val] = originValue.split('in').map(l => l.trim());
-        console.log(data, container)
         // (item, index) =>
         // if (key.indexOf(',') != -1) {
 
@@ -280,18 +285,18 @@ export const directPlugins = {
                     try {
                         setElementInProgress(el);
                         actionContent.push({ key, val, id: el.__KEY, type: 'for' });
-                        console.log(newChild, [args].concat(child))
+                        console.log(newChild, list?.data);
                         let d = renderList(newChild, list.data, key)
                         console.log(d);
                         [args].concat(d).forEach(c => {
-                            const { tag, props, id, parent, text, index } = c;
+                            const { tag, props, id, parent, text, listIndex } = c;
                             DOM.createElement(
                                 tag,
                                 props,
                                 id,
                                 parent,
                                 text,
-                                index
+                                listIndex
                             )
                         });
                     } catch (error) {

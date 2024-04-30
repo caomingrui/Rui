@@ -24,9 +24,6 @@ export function isTextElement(elem: Element): boolean {
     return elem.nodeType === 3
 }
 
-
-export function appendChild(elem) {}
-
 export const Stack = {
     stack: [],
     length: 0,

@@ -2,19 +2,20 @@ import { matchTemplate } from ".";
 import { initializeDirect } from "../utils/directPlugins";
 import { initializeEvent } from "./event";
 
+export type PropsType = {
+    dict?: Record<string, any>;
+    attr?: Record<string, any>;
+}
 
-export function getPropsValue(props_string: string) {
+export function getPropsValue(props_string: string): PropsType {
     let props_list = props_string.split('"')
         .filter(l => l);
-    let value = {
-        
-    };
+    const value: PropsType = {};
 
     for (let i = 0; i < props_list.length; i+=2) {
         let k = props_list[i].substring(0, props_list[i].indexOf('=')).trim();
         let v = props_list[i + 1].trim();
-        let n1 = k.slice(0, 1), n2 = k.slice(0, 2);
-        // value[k] = v;
+        let n2 = k.slice(0, 2);
 
         // dict
         if (n2 === 'v-') {
@@ -74,6 +75,7 @@ export function parseProps(container: any, props_s: string, isFirst = true) {
                 let old = container.getAttribute(k);
                 if (old === v) continue;
             }
+            console.log(k, v)
             container.setAttribute(k, v);
         }
     }

@@ -11,7 +11,7 @@ import {
     patchList, 
     renderList,
 } from "../proxyBonding";
-import { getPropsValue, parseProps } from "./parseProps";
+import { PropsType, getPropsValue, parseProps } from "./parseProps";
 import type {
     ElementType,
     ListTemplateDepType,
@@ -22,8 +22,6 @@ import type {
 
 
 let elementInProgress: null | any = null;
-let elementForInProgress: null | any = null;
-
 
 export let actionElementId: string | null = null;
 export let actionContent: ForContent[] = [];
@@ -34,66 +32,16 @@ export const setElementInProgress = (newElementInProgress: any) => (elementInPro
 export const getActionElementId = () => actionElementId;
 export const setActionElementId = (id: string) => (actionElementId = id);
 
-export const getElementForInProgress = () => elementForInProgress;
-export const setElementForInProgress = (id: string) => (elementForInProgress = id);
-
-
-const for_list = Object.create(Stack);
-for_list.isForChild = function(data: ElementType) {
-    if (!data) return false;
-    let first = this.getLast();
-
-    if (!first) return false;
-    // 子节点收集完毕
-    if (data.parent === first.parent) {
-        let el = first.el;
-        elementForInProgress = el;
-        let { child } = this.stack.pop();
-        let { data, key, val } = el.__v_for;
-        // let cloneActiveEffect = activeEffect;
-        el.__v_originChild = child.slice();
-        // 过滤for child循环收集依赖
-        try {
-            // activeEffect = null;
-            actionContent.push({ key, val, id: el.__KEY, type: 'for' });
-            renderList(child, data, key).forEach(c => {
-                DOM.createForChild(el, c);
-            });
-        }
-        finally {
-            actionContent.pop();
-            // activeEffect = cloneActiveEffect;
-        }
-        return false;
-    }
-    first.child.push(data);
-    return true;
-}
-for_list.match_v_for = function(elem: any, data: ElementType) {
-    if (elem.__v_for_container) {
-        this.push({...data, el: elem, child: []});
-        return true;
-    }
-    return false;
-}
-
-
+// dict context
 const Context = Object.setPrototypeOf({
-    lastData: null,
-
     collectContextChild: function(data: any) {
         if (!data) return false;
         let context = this.getLast();
-        this.lastData = data;
         if (!context) return false;
         const { parent } = data;
         const { actions, payload } = context;
         // 节点收集完毕
-        if (parent === payload.parent) {
-            // let el = payload.el;
-            // console.log(el, el.__KEY, data, elementInProgress);
-            // elementForInProgress = el;   
-            
+        if (parent === payload.parent) { 
             let context = this.stack.pop();
             actions.collectCallback(context); 
         }
@@ -180,11 +128,11 @@ export const DOM = {
         id: string,
         parent: string  | null,
         text: string,
-        index: number
+        index: number | null
     ) {
         const records = { tag, props, id, parent, text, index };
         if (!parent) {
-            let elem = createVNodeElm(tag, props,  text, id, 'NULL');
+            let elem = createVNodeElm(tag, props,  text, id, 'NULL', index);
             // elementInProgress.parentNode.insertBefore(elem, elementInProgress);
             if (isTextElement(elementInProgress)) {
                 elementInProgress.parentNode.insertBefore(elem, elementInProgress);
@@ -193,13 +141,12 @@ export const DOM = {
             }
             elementInProgress = elem;
         } else {
-            //  收集v-for子节点
-            // if (for_list.isForChild(records)) return JumpUpdateForChildFlags;
+            //  收集修饰符子节点
             if (Context.collectContextChild(records)) return JumpUpdateForChildFlags;
             if (elementInProgress.__KEY === parent) {
-                let elem = createVNodeElm(tag, props, text, id, parent);
+                let elem = createVNodeElm(tag, props, text, id, parent, index);
                 if (!elem) return;
-                // v-for
+                // dict
                 if (Context.matchDictContext(elem, records)) {
                     elementInProgress.appendChild(elem);
                     return elem.__is_template;
@@ -210,9 +157,9 @@ export const DOM = {
             }
             else {
                 let parentElem = matchParent(parent);
-                let elem = createVNodeElm(tag, props, text, id, parent);
+                let elem = createVNodeElm(tag, props, text, id, parent, index);
                 if (!elem) return;
-                // v-for
+                // dict
                 if (Context.matchDictContext(elem, records)) {
                     elementInProgress = parentElem;
                     parentElem.appendChild(elem);
@@ -230,33 +177,33 @@ export const DOM = {
         return elementInProgress.__is_template;
     },
 
-    createForChild(container: any, data: any) {
-        let { tag, props, id, parent, text, listIndex, achor } = data;
-        if (elementInProgress.__KEY === parent) {
-            let elem = createVNodeElm(tag, props, text, id, parent, listIndex);
-            if (!elem) return;
-            // if () {}
-            elementInProgress.appendChild(elem);
-            elementInProgress = elem;
-        }
-        else {
-            let elem = createVNodeElm(tag, props, text, id, parent, listIndex);
-            if (!elem) return;
-            let parentElem = matchParent(parent, elementInProgress);
-            if (elementInProgress.__KEY === id && isTextElement(elementInProgress)) {
-                parentElem.insertBefore(elem, elementInProgress);
-                return;
-            }
+    // createForChild(container: any, data: any) {
+    //     let { tag, props, id, parent, text, listIndex, achor } = data;
+    //     if (elementInProgress.__KEY === parent) {
+    //         let elem = createVNodeElm(tag, props, text, id, parent, listIndex);
+    //         if (!elem) return;
+    //         // if () {}
+    //         elementInProgress.appendChild(elem);
+    //         elementInProgress = elem;
+    //     }
+    //     else {
+    //         let elem = createVNodeElm(tag, props, text, id, parent, listIndex);
+    //         if (!elem) return;
+    //         let parentElem = matchParent(parent, elementInProgress);
+    //         if (elementInProgress.__KEY === id && isTextElement(elementInProgress)) {
+    //             parentElem.insertBefore(elem, elementInProgress);
+    //             return;
+    //         }
             
             
-            if (achor) {
-                parentElem.insertBefore(elem, achor);
-            } else {
-                parentElem.appendChild(elem);
-            }
-            elementInProgress = elem;
-        }
-    },
+    //         if (achor) {
+    //             parentElem.insertBefore(elem, achor);
+    //         } else {
+    //             parentElem.appendChild(elem);
+    //         }
+    //         elementInProgress = elem;
+    //     }
+    // },
 
     updateForChild(container: any, data: ElementType, deps: ListTemplateDepType[], indexMess: [number, number]) {
         let { text, isResponsiveElem, id, props, originTag, flags, listIndex, tag, parent } = data;
@@ -265,7 +212,7 @@ export const DOM = {
         switch (flags) {
             case 'ADD':
                 // DOM.createForChild(elementInProgress, data);
-                DOM.createElement(tag, props, id, parent, text, data.index)
+                DOM.createElement(tag, props, id, parent, text, listIndex || null)
                 return;
         }
         if (elementInProgress.__KEY === id) {
@@ -346,7 +293,7 @@ export const DOM = {
     },
 
     updateList(elementId: string, depsStr: string) {
-        let deps = depsStr.split('>>>');
+        // let deps = depsStr.split('>>>');
         let templateID = getElementIdToTemplateId(elementId);
         let data = componentMap.get(templateID);
         if (data) {
@@ -357,13 +304,12 @@ export const DOM = {
             let newList = data.data[val];
             actionContent.push({key, val, id: elementId, type: 'for'});
             try {
-                console.log(elementInProgress, activeEl, oldList, newList)
                 let locateMap = patchList(activeEl, oldList, newList);
                 newList = newList.map((res: Record<string, any>, ind: number) => {
                     let map = locateMap.get(ind) || {};
                     return {...res, ...map}
                 });
-
+                // BUG
                 elementInProgress = activeEl.previousSibling.childNodes[0] || {};
                 // BUG 不优雅
                 let star = Number(elementInProgress.__KEY.split('@@')[1].split('-')[0])
@@ -468,8 +414,9 @@ export function matchTemplate(
             if (firstParams === for_param) {
                 parseTemplate.init(params, { [for_param]: data[val][listIndex] });
                 return fn(data, methods);
+            }
             // 解析bind 上下文参数 
-            } else if (parseTemplate.hasFunBindInForContent(params, for_param)) {
+            else if (parseTemplate.hasFunBindInForContent(params, for_param)) {
                 parseTemplate.init(params, { [for_param]: data[val][listIndex], ...methods });
                 return fn(data, methods);
             }
@@ -512,7 +459,7 @@ export function createVNodeElm(
             elemSetTemplate(elem, id, UpdateTextFlags);
             break;
         default:
-            elem = createElement(tag, id, parent, prveProps);
+            elem = createElementComponent(tag, id, parent, prveProps);
             break;
     }
 
@@ -533,16 +480,15 @@ export function createVNodeElm(
 }
 
 
-function createElement(tagName: string, id: string, parent: string, props) {
+function createElementComponent(tagName: string, id: string, parent: string, props: PropsType) {
     let Component = matchChildTag(id, tagName);
-    // console.log(props, tagName, elementInProgress, id)
     if (props.dict && id != elementInProgress.__KEY) {
         return document.createTextNode('');
     }
     if (isFunction(Component) && Component.__type === ComponentKey) {
         try {
             if (!(elementInProgress.__KEY === id && isTextElement(elementInProgress))) {
-                const parentElem = matchParent(parent, elementInProgress );
+                const parentElem = matchParent(parent, elementInProgress);
                 elementInProgress = parentElem;
             }
             
