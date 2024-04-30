@@ -8,14 +8,25 @@ const Child = Component((instance) => {
     const {
         data,
         methods,
-        useMounted
+        useMounted,
+        useUpdated,
+        useUnmounted
     } = instance.init(reaction({
         counnt: 0
     }))
 
     useMounted(() => {
         console.log('Child -- render =====================>>');
+    });
+
+    useUpdated(() => {
+        console.log('child 组件更新了');
+    });
+
+    useUnmounted(() => {
+        console.log('我销毁了')
     })
+
     methods.handleTest = function() {
         data.counnt += 1;
     }
@@ -86,14 +97,12 @@ const Example = Component((instance, props) => {
   }
 
   return (`<div>                             
-                <button class="mt-but error mr_10" @click="handleSum">累加
-                (<span>{computeTest}--劳资蜀道-{number}</span>)
-                </button>
-                <button class="mt-but" @click="handleCancelDel">显示隐藏</button>
-                <p>{ name }--{dels.a.b}</p>
-                <span :class="spanClass">test - { bool }</span>
+                
                 <p v-if="bool">我是bool-v-if</p>
-                <p v-show="bool">我是bool-v-show</p>
+                
+                
+                <Child v-show="bool"></Child>
+                <Child v-if-new="bool"></Child>
                 <div v-for="item in list">
                     <div :key="item.id">
                         { item.data } -- {item.a} - {item.c.b.c.d} - {number} --- {bool}
@@ -103,20 +112,41 @@ const Example = Component((instance, props) => {
                         <p>{ bool }</p>
                     </div>
                 </div>
-                
+                <button class="mt-but" @click="handleCancelDel">显示隐藏</button>
+                <div v-if-new="bool">test</div>
+                <p>...........................</p>
         </div>`)
 });
 
 
+// <div v-for="item in list">
+//                     <div :key="item.id">
+//                         { item.data } -- {item.a} - {item.c.b.c.d} - {number} --- {bool}
+//                         <p>{bool}-123--{number} - { item.id }</p>
+//                         <button :class="spanClass" @click="testBind.bind(null, item.id, item.a)">获取列表item</button>
+//                         <Child></Child>
+//                         <p>{ bool }</p>
+//                     </div>
+//                 </div>
 
+// <button class="mt-but error mr_10" @click="handleSum">累加
+//                     (<span>{computeTest}--劳资蜀道-{number}</span>)
+//                 </button>
+//                 <p>{ name }--{dels.a.b}</p>
+//                 <span :class="spanClass">test - { bool }</span>
 
-// { item.data } -- {item.a} - {item.c.b.c.d} - {number} --- {bool}
-//                               <p>{bool}-123--{number} - { item.id }</p>
-//                               <p :class="spanClass" @click="testBind.bind(null, item.id, item.a)">我是update class</p>
-
-
-
-//                               <p @click="test"><span>123</span></p>
-//                       <Child></Child>
-//                       <p>123123123</p>
+// <p>{ name }--{dels.a.b}</p>
+//                 <span :class="spanClass">test - { bool }</span>
+//                 <p v-if="bool">我是bool-v-if</p>
+//                 <p v-show="bool">我是bool-v-show</p>
+//                 <div v-for="item in list">
+//                     <div :key="item.id">
+//                         { item.data } -- {item.a} - {item.c.b.c.d} - {number} --- {bool}
+//                         <p>{bool}-123--{number} - { item.id }</p>
+//                         <button :class="spanClass" @click="testBind.bind(null, item.id, item.a)">获取列表item</button>
+//                         <Child></Child>
+//                         <p>{ bool }</p>
+//                     </div>
+//                 </div>
+//                 <Child></Child>
 Example({ data: '???' });

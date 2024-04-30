@@ -9,7 +9,7 @@ import type {
     ListTemplateDepType,
     ElementType
 } from '../types/proxyBonding';
-import { ParseTemplate, generateRandomHash, isPromise } from '../utils';
+import { ParseTemplate, generateRandomHash, isPromise, runWithCycleCallback } from '../utils';
 import scheduler, { promise } from '../utils/scheduler';
 
 
@@ -434,7 +434,9 @@ export function viewRender(
         // diff
         else {
             // wasm
-            prevStack && wasmPacth(prevStack, updates.map(l => l.id).join('>>>'))
+            prevStack && wasmPacth(prevStack, updates.map(l => l.id).join('>>>'));
+            
+            onCycleCallbacks && runWithCycleCallback(onCycleCallbacks, 'useUpdated');
         }
         oldStack = prevStack;
         

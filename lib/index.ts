@@ -59,7 +59,6 @@ export function Component(callback: (
                 this.data = proxy = data;
                 this.methods = methodsObj = methods;
                 this.components = components;
-                console.log(components)
             } else {
                 this.data = initData;
             }

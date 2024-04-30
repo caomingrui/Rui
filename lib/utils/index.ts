@@ -20,17 +20,27 @@ export function isNumber<T>(number: T): boolean {
 }
 
 
+export function isTextElement(elem: Element): boolean {
+    return elem.nodeType === 3
+}
+
+
+export function appendChild(elem) {}
+
 export const Stack = {
     stack: [],
     length: 0,
 
     push(data: any) {
-        this.length += 1;
+        console.log(data)
+        
         // @ts-ignore
-        this.stack.push(data)
+        this.stack.push(data);
+        this.length = this.stack.length;
     },
 
     getLast() {
+        this.length = this.stack.length;
         return this.stack[this.length - 1 && 0];
     },
 
