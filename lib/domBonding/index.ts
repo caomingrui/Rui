@@ -190,34 +190,6 @@ export const DOM = {
         return elementInProgress.__is_template;
     },
 
-    // createForChild(container: any, data: any) {
-    //     let { tag, props, id, parent, text, listIndex, achor } = data;
-    //     if (elementInProgress.__KEY === parent) {
-    //         let elem = createVNodeElm(tag, props, text, id, parent, listIndex);
-    //         if (!elem) return;
-    //         // if () {}
-    //         elementInProgress.appendChild(elem);
-    //         elementInProgress = elem;
-    //     }
-    //     else {
-    //         let elem = createVNodeElm(tag, props, text, id, parent, listIndex);
-    //         if (!elem) return;
-    //         let parentElem = matchParent(parent, elementInProgress);
-    //         if (elementInProgress.__KEY === id && isTextElement(elementInProgress)) {
-    //             parentElem.insertBefore(elem, elementInProgress);
-    //             return;
-    //         }
-            
-            
-    //         if (achor) {
-    //             parentElem.insertBefore(elem, achor);
-    //         } else {
-    //             parentElem.appendChild(elem);
-    //         }
-    //         elementInProgress = elem;
-    //     }
-    // },
-
     updateForChild(container: any, data: ElementType, deps: ListTemplateDepType[], indexMess: [number, number]) {
         let { text, isResponsiveElem, id, props, originTag, flags, listIndex, tag, parent } = data;
         let childNodes;
@@ -441,8 +413,8 @@ export function matchTemplate(
             let match = parseTemplate.getMatchData();
             if(isFunction(match)) {
                 return {
-                    fn: () => {
-                        let data = match.call(methods);
+                    fn: (...args: any) => {
+                        let data = match.call(methods, ...args);
                         actionElementId = null;
                         return data;
                     }
@@ -496,7 +468,7 @@ export function createVNodeElm(
     listIndex: null | number = null
 ) {
     let elem: any;
-    let prveProps = getPropsValue(props);
+    let prveProps = getPropsValue(props, id, listIndex);
     
     switch (tag) {
         case "text":
@@ -519,7 +491,7 @@ export function createVNodeElm(
     }
 
     if (elementInProgress.__KEY != id) {
-        let responsiveElemState = parseProps(elem, props);
+        let responsiveElemState = parseProps(elem, prveProps);
         if (responsiveElemState) {
             elemSetTemplate(elem, id, UpdateAttributeFlags);
         }
@@ -537,12 +509,13 @@ function createElementComponent(tagName: string, id: string, parent: string, pro
     if (isFunction(Component) && Component.__type === ComponentKey) {
         try {
             if (!(elementInProgress.__KEY === id && isTextElement(elementInProgress))) {
-                const parentElem = matchParent(parent, elementInProgress);
-                elementInProgress = parentElem;
+                elementInProgress = matchParent(parent, elementInProgress);
             }
-            
             actionContent.push({ type: 'component', key: id, val: 'null', id: 'null' });
-            Component();
+            Component({
+                ...(props.bind || {}), 
+                ...(props.events || {})
+            });
         }
         catch (error) {
             console.error(error);

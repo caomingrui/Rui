@@ -48,7 +48,6 @@ function track(target: any, key: any, value: any) {
     let actionElementId = getActionElementId();
     
     if (activeEffect && actionElementId) {
-        console.log(activeEffect, actionElementId, key);
         let depsMap = targetMap.get(target);
         if (!depsMap) {
             targetMap.set(target, (depsMap = new Map()));
@@ -74,7 +73,6 @@ function track(target: any, key: any, value: any) {
          * 比如 列表中使用 {name}, 那么getter会收集 name -> item 的关联
          * actionContent 就是循环块上下文
          */
-        // console.log(key, actionElementId, activeEffect, actionContent);
         let data = actionContent[actionContent.length - 1] || {};
         if (data.type === 'for') {
             activeEffect.addDeps({
@@ -134,7 +132,6 @@ const ReactiveEffect = function (
                 parent = parent.parent;
             }
             this.parent = activeEffect;
-            
 
             activeEffect = this;
             fn(this.updateDeps);

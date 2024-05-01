@@ -38,7 +38,7 @@ const Child2 = Component((instance) => {
 })
 
 
-const Child = Component((instance) => {
+const Child = Component((instance, props) => {
     const state = reaction({
         counnt: 0
     });
@@ -55,7 +55,7 @@ const Child = Component((instance) => {
     }))
 
     useMounted(() => {
-        console.log('Child -- render =====================>>', data);
+        console.log('Child -- render =====================>>', props);
     });
 
     useUpdated(() => {
@@ -70,13 +70,16 @@ const Child = Component((instance) => {
         data.counnt += 1;
     }
     methods.setCount = () => setCount((d: number) => d + 1);
+    methods.cb = () => {
+        props.cb(props.data + 'hahah');
+    };
     return (`
         <div>
             <p>num: {counnt} --- {count}</p>
             <button @click="handleTest>Child num ++</button>
             <button @click="setCount>Child num ++</button>
             <Child2></Child2>
-            <p>...........................</p>
+            <button @click="cb">子传父 cb</button>
             
         </div>
     `)
@@ -140,12 +143,16 @@ const Example = Component((instance, props) => {
     console.log(item);
   }
 
+  methods.cbb = function(aa: string) {
+    console.log(aa);
+  }
+
   return (`<div>                             
                 
                 <p v-if="bool">我是bool-v-if</p>
                 
                 
-                <Child></Child>
+                <Child :data="name" :bool="bool" @cb="cbb"></Child>
                 <Child v-show="bool"></Child>
                 
                 <button class="mt-but" @click="handleCancelDel">显示隐藏</button>
