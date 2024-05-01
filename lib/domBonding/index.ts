@@ -30,7 +30,7 @@ export const getElementInProgress = () => elementInProgress;
 export const setElementInProgress = (newElementInProgress: any) => (elementInProgress = newElementInProgress);
 
 export const getActionElementId = () => actionElementId;
-export const setActionElementId = (id: string) => (actionElementId = id);
+export const setActionElementId = (id: string | null) => (actionElementId = id);
 
 // dict context
 const Context = Object.setPrototypeOf({
@@ -88,8 +88,21 @@ export const DOM = {
             elementInProgress = starElement;
             data.insertElem = document.body;
         } else {
+            const achor: any = document.createTextNode("");
+            achor.__type = ComponentKey;
+            achor.__KEY = elementId;
+            // console.log(elementInProgress, elementId, '?????');
+            if (isTextElement(elementInProgress)) {
+                elementInProgress.parentNode.insertBefore(achor, elementInProgress.nextSibling);
+            } else {
+                elementInProgress.appendChild(achor);
+            }
+            
             elementInProgress.__type = ComponentKey;
-            data.insertElem = elementInProgress;
+            
+            data.insertElem = achor;
+            // elementInProgress.__type = ComponentKey;
+            // data.insertElem = elementInProgress;
         }
 
         componentMap.set(componentId, data);
@@ -289,7 +302,35 @@ export const DOM = {
     },
 
     removeElement(el: any) {
+        let list: string[] = [];
+        const dfs = (c: any) => {
+            if (!c) return;
+            
+            if (c.nextSibling && isTextElement(c.nextSibling) && c.nextSibling.__removeTarget_key === c.__KEY) {
+                list.unshift(c.__KEY);
+            } 
+            else if (c.previousSibling && isTextElement(c.previousSibling) && c.previousSibling.__KEY === c.__KEY) {
+                list.unshift(c.__KEY);
+            }
+            
+            let e = c.children;
+            for (let i = 0; i < e.length; i++) {
+                let d = e[i];
+                dfs(d);
+            }
+        }
+        
+        dfs(el);
         el.parentNode.removeChild(el);
+        list.forEach(l => {
+            let id = getElementIdToTemplateId(l);
+            let data = componentMap.get(id);
+            if (data) {
+                data.scope.forEach(l => l.clearUp())
+                runWithCycleCallback(data.onCycleCallbacks, 'useUnmounted');
+                componentMap.delete(id);
+            }
+        })
     },
 
     updateList(elementId: string, depsStr: string) {
@@ -335,6 +376,14 @@ export const DOM = {
 
 export function matchParent(parentId: string, elem = elementInProgress): Element {
     if (elem.__KEY === parentId) {
+        return elem;
+    }
+    // 是否匹配 组件插入位置的text节点
+    else if (
+        elem.nextSibling && 
+        isTextElement(elem.nextSibling) &&
+        parentId === elem.nextSibling.__KEY
+    ) {
         return elem;
     }
     else {

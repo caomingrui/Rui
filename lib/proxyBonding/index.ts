@@ -1,5 +1,5 @@
 import { CycleCallbacks } from '..';
-import { actionContent, getActionElementId, getElementIdToTemplateId, getElementInProgress } from '../domBonding';
+import { DOM, actionContent, getActionElementId, getElementIdToTemplateId, getElementInProgress } from '../domBonding';
 import { Responsive, wasmPacth, wasmParse, wasmRender } from '../paseHtmleTemplate/wasm';
 import type { 
     ReactiveEffectType,
@@ -30,6 +30,7 @@ let activeEffect: null | ReactiveEffectType = null;
 export const baseHandlers = {
     get: (target: any, key: any, receiver: any) => {
         const res = Reflect.get(target, key, receiver);
+        if (key === '__KEY') return res;
         track(target, key, res);
         return res;
     },
@@ -47,6 +48,7 @@ function track(target: any, key: any, value: any) {
     let actionElementId = getActionElementId();
     
     if (activeEffect && actionElementId) {
+        console.log(activeEffect, actionElementId, key);
         let depsMap = targetMap.get(target);
         if (!depsMap) {
             targetMap.set(target, (depsMap = new Map()));
@@ -56,6 +58,17 @@ function track(target: any, key: any, value: any) {
             depsMap.set(key, (dep = new Set()));
         }
         dep.add(activeEffect);
+        const clearUp = (clone: ReactiveEffectType) => {
+            if (!dep || !depsMap) return;
+            dep.delete(clone);
+            if (!dep.size) {
+                depsMap.delete(key);
+                if (!depsMap.size) {
+                    targetMap.delete(target);
+                }
+            }
+        }
+        let fn = clearUp.bind(null, activeEffect)
         /**
          * 列表项中使用使用非 item项 提供的数据源建立关联, 更新时直接通知列表变更
          * 比如 列表中使用 {name}, 那么getter会收集 name -> item 的关联
@@ -69,7 +82,8 @@ function track(target: any, key: any, value: any) {
                 key,
                 value,
                 content: data,
-                id: data.id
+                id: data.id,
+                clearUp: fn
             })
         } else {
             activeEffect.addDeps({
@@ -77,7 +91,8 @@ function track(target: any, key: any, value: any) {
                 key,
                 value,
                 content: {},
-                id: actionElementId
+                id: actionElementId,
+                clearUp: fn
             })
         }
 
@@ -98,25 +113,39 @@ function trigger(target: any, key: string) {
 
 const ReactiveEffect = function (
     this: ReactiveEffectType,
-    fn: (deps: Dep[]) => void
+    fn: (deps: Dep[]) => void,
+    scope: Dep[] = [],
 )  {
     // 依赖
-    this.deps = [];
+    this.deps = scope;
 
     // 变更
     this.updateDeps = [];
 
+    this.parent = null;
+
     this.run = function () {
         try {
+            let parent = activeEffect
+            while (parent) {
+                if (parent === this) {
+                    return;
+                }
+                parent = parent.parent;
+            }
+            this.parent = activeEffect;
+            
+
             activeEffect = this;
             fn(this.updateDeps);
         } finally {
-            activeEffect = null;
+            activeEffect = this.parent;
             promise.then(() => this.clearUpdateDeps())
         }
     }
 
     this.addDeps = function (dep) {
+
         let bool = this.deps.find(l => {
             return ( l.id === dep.id ) &&
                 ( l.content.val === dep.content.val ) &&
@@ -144,7 +173,7 @@ const ReactiveEffect = function (
         this.updateDeps = [];
     }
 } as any as {
-    new (fn: (deps: Dep[]) => void): ReactiveEffectType;
+    new (fn: (deps: Dep[]) => void, scope: Dep[]): ReactiveEffectType;
 }
 
 
@@ -384,36 +413,28 @@ export function viewRender(
     components: Record<string, any> | null = null,
     onCycleCallbacks?: CycleCallbacks
 ) {
-    let templateID;
-    if (!data.__KEY) {
-        templateID = generateRandomHash(16);
-        
-        const componentMess: any = {
-            data,
-            methods: new Proxy(methods, proxyErrorHandlers),
-            onCycleCallbacks,
-            // elem: starElement,
-            // deps: new Set(),
-            // listDeps: new Map(),
-            elem: null,
-            components
-        }
-        
-        let elementInProgress = getElementInProgress();
-        console.log(elementInProgress, 'render')
-        if (!elementInProgress) {
-            // let starElement = document.createTextNode("");
-            // document.body.appendChild(starElement);
-            // componentMess.elem = starElement;
-            // setElementInProgress(starElement);
-        } else {
-            componentMess.elem = elementInProgress;
-        }
-        componentMap.set(templateID, componentMess);
-        data.__KEY = templateID;
-    } else {
-        templateID = data.__KEY;
+    if (data.__KEY) return data.__KEY;
+    let templateID = data.__KEY;
+    
+    templateID = generateRandomHash(16);
+    
+    const componentMess: any = {
+        data,
+        methods: new Proxy(methods, proxyErrorHandlers),
+        onCycleCallbacks,
+        elem: null,
+        components,
+        scope: []
     }
+    
+    let elementInProgress = getElementInProgress();
+    
+    if (elementInProgress) {
+        componentMess.elem = elementInProgress;
+    }
+    componentMap.set(templateID, componentMess);
+    data.__KEY = templateID;
+    
 
     let oldStack: Responsive[] | null = null,
         prevStack: Responsive[] | null = null;
@@ -442,7 +463,7 @@ export function viewRender(
         
     }
 
-    let effect = new ReactiveEffect(updateComponent);
+    let effect = new ReactiveEffect(updateComponent, componentMess.scope);
     effect.run();
 
     return data.__KEY;

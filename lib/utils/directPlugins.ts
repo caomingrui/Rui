@@ -62,7 +62,6 @@ export const directPlugins = {
             container.__v_if = true;
             container.__childs = ifDict;
         }
-        console.log(container)
         if (!data) {
             if ( 
                 container.previousSibling &&
@@ -94,7 +93,9 @@ export const directPlugins = {
                         listIndex
                     )
                 })
-            } catch (error) {}
+            } catch (error) {
+                console.error(error);
+            }
             finally {
                 console.log(getElementInProgress(), args, container.__KEY)
                 let d = getElementInProgress();
@@ -155,7 +156,9 @@ export const directPlugins = {
                         listIndex
                     )
                 })
-            } catch (error) {}
+            } catch (error) {
+                console.error(error);
+            }
             finally {
                 let elementInProgress = getElementInProgress();
                 /**
@@ -232,7 +235,9 @@ export const directPlugins = {
                         listIndex
                     )
                 })
-            } catch (error) {}
+            } catch (error) {
+                console.error(error)
+            }
             finally {
                 let elementInProgress = getElementInProgress();
                 /**
@@ -285,9 +290,7 @@ export const directPlugins = {
                     try {
                         setElementInProgress(el);
                         actionContent.push({ key, val, id: el.__KEY, type: 'for' });
-                        console.log(newChild, list?.data);
-                        let d = renderList(newChild, list.data, key)
-                        console.log(d);
+                        let d = renderList(newChild, list.data, key);
                         [args].concat(d).forEach(c => {
                             const { tag, props, id, parent, text, listIndex } = c;
                             DOM.createElement(

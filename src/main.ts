@@ -24,6 +24,20 @@ function useSetCount() {
 }
 
 
+const Child2 = Component((instance) => {
+    const {
+        useUnmounted
+    } = instance.init(reaction({
+        msg: '???????????'
+    }))
+
+    useUnmounted(() => {
+        console.log('child2 卸载')
+    })
+    return `<div>{ msg }</div>`
+})
+
+
 const Child = Component((instance) => {
     const state = reaction({
         counnt: 0
@@ -35,7 +49,10 @@ const Child = Component((instance) => {
         useMounted,
         useUpdated,
         useUnmounted
-    } = instance.init(merge(state, countState))
+    } = instance.init(() => ({
+        data: merge(state, countState),
+        components: { Child2 }
+    }))
 
     useMounted(() => {
         console.log('Child -- render =====================>>', data);
@@ -46,7 +63,7 @@ const Child = Component((instance) => {
     });
 
     useUnmounted(() => {
-        console.log('我销毁了')
+        console.log('Child 我销毁了')
     })
 
     methods.handleTest = function() {
@@ -58,6 +75,9 @@ const Child = Component((instance) => {
             <p>num: {counnt} --- {count}</p>
             <button @click="handleTest>Child num ++</button>
             <button @click="setCount>Child num ++</button>
+            <Child2></Child2>
+            <p>...........................</p>
+            
         </div>
     `)
 })
@@ -125,23 +145,26 @@ const Example = Component((instance, props) => {
                 <p v-if="bool">我是bool-v-if</p>
                 
                 
+                <Child></Child>
                 <Child v-show="bool"></Child>
-                <Child v-if-new="bool"></Child>
-                <div v-for="item in list">
-                    <div :key="item.id">
-                        { item.data } -- {item.a} - {item.c.b.c.d} - {number} --- {bool}
-                        <p>{bool}-123--{number} - { item.id }</p>
-                        <button :class="spanClass" @click="testBind.bind(null, item.id, item.a)">获取列表item</button>
-                        <Child></Child>
-                        <p>{ bool }</p>
-                    </div>
-                </div>
+                
                 <button class="mt-but" @click="handleCancelDel">显示隐藏</button>
-                <div v-if-new="bool">test</div>
-                <p>...........................</p>
+                <Child v-if-new="bool"></Child>
+                <p>............{ bool }...............</p>
         </div>`)
 });
 
+
+
+// <div v-for="item in list">
+//                     <div :key="item.id">
+//                         { item.data } -- {item.a} - {item.c.b.c.d} - {number} --- {bool}
+//                         <p>{bool}-123--{number} - { item.id }</p>
+//                         <button :class="spanClass" @click="testBind.bind(null, item.id, item.a)">获取列表item</button>
+//                         <Child></Child>
+//                         <p>{ bool }</p>
+//                     </div>
+//                 </div>
 
 // <div v-for="item in list">
 //                     <div :key="item.id">

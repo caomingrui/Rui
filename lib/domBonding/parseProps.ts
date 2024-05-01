@@ -31,6 +31,7 @@ export function getPropsValue(props_string: string): PropsType {
 }
 
 
+// BUG props_s 待与 PropsType 同步
 export function parseProps(container: any, props_s: string, isFirst = true) {
     let props_list = props_s.split('"')
         .filter(l => l);
@@ -75,7 +76,7 @@ export function parseProps(container: any, props_s: string, isFirst = true) {
                 let old = container.getAttribute(k);
                 if (old === v) continue;
             }
-            console.log(k, v)
+
             container.setAttribute(k, v);
         }
     }

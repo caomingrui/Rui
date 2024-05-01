@@ -1,3 +1,4 @@
+import { setActionElementId } from "./domBonding";
 import { ComponentKey, baseHandlers, targetMap, viewRender } from "./proxyBonding";
 import { isFunction, isObject } from "./utils";
 
@@ -18,6 +19,7 @@ export function doWatch(source: any, callback: any) {
 
 // 合并 proxy
 export function merge(...args: Record<string, any>[]) {
+    setActionElementId(null);
     const initProxy = args.reduce((o, b) => ({...o, ...b}), {})
     let handler = {
         get: (target: any, key: any, receiver: any) => {

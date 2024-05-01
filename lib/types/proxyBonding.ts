@@ -8,7 +8,7 @@ export type Dep = {
     content: Partial<ForContent>,
     id: string
 
-    
+    clearUp: () => void
 }
 
 export type ListTemplateDepType = {
@@ -40,6 +40,8 @@ export type ListTemplateListType = {
 export type ReactiveEffectType = {
     deps: Dep[]
     updateDeps: Dep[],
+    parent: null | ReactiveEffectType
+
     run: () => void
     addDeps: (dep: Dep) => void
     addUpdateDeps: (depKey: string) => void
@@ -55,7 +57,7 @@ export type ComponentMapType = {
     deps: Set<any>
     listDeps: Map<string, ListTemplateListType>
     components?: Record<string, any> | null
-
+    scope: Dep[]
 
     onCycleCallbacks: CycleCallbacks
 }
