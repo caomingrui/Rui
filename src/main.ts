@@ -4,7 +4,7 @@ import {
   useWatch,
   merge,
   reaction
-} from '../lib/index';
+} from '../lib';
 import { isFunction, isNumber } from '../lib/utils';
 
 function useSetCount() {

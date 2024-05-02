@@ -6,9 +6,9 @@ import {
     matchParent, 
     matchTemplate, 
     setElementInProgress 
-} from "../domBonding/index.js";
+} from "../domBonding";
 import { UpdateForListFlags } from "../proxyBonding/flages.js";
-import { renderList } from "../proxyBonding/index.js";
+import { renderList } from "../proxyBonding";
 import { Stack } from "./index.js";
 
 
@@ -202,10 +202,8 @@ export const directPlugins = {
                     container.__payload = payload;
                 },
                 match: function(this: any, elem: any, data: any) {
-                    if (elem.__v_show) {
-                        return true;
-                    }
-                    return false;
+                    return !!elem.__v_show;
+
                 }
             };
             container.__v_show = true;
@@ -322,10 +320,8 @@ export const directPlugins = {
                     }
                 },
                 match: function(this: any, elem: any) {
-                    if (elem.__v_for_container) {
-                        return true;
-                    }
-                    return false;
+                    return !!elem.__v_for_container;
+
                 }
             };
             container.__v_for_container = true;

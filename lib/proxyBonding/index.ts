@@ -419,7 +419,7 @@ export function viewRender(
     onCycleCallbacks?: CycleCallbacks
 ) {
     if (data.__KEY) return data.__KEY;
-    let templateID = data.__KEY;
+    let templateID: string;
     
     templateID = generateRandomHash(16);
     
