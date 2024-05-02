@@ -41,7 +41,8 @@ export type ReactiveEffectType = {
     deps: Dep[]
     updateDeps: Dep[],
     parent: null | ReactiveEffectType
-
+    
+    scheduler?: null | (() => void),
     run: () => void
     addDeps: (dep: Dep) => void
     addUpdateDeps: (depKey: string) => void

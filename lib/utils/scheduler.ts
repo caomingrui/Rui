@@ -11,7 +11,11 @@ export default function scheduler(effect: ReactiveEffectType, key: string) {
     }
 
     promise.then(() => {
-        effect.run();
+        if (effect.scheduler) {
+            effect.scheduler();
+        } else {
+            effect.run();
+        }
         jobs.delete(effect);
     })
     jobs.add(effect);

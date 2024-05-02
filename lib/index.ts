@@ -1,5 +1,6 @@
 import { setActionElementId } from "./domBonding";
-import { ComponentKey, baseHandlers, targetMap, viewRender } from "./proxyBonding";
+import { ComponentKey, ReactiveEffect, baseHandlers, targetMap, viewRender } from "./proxyBonding";
+import { ReactiveEffectType } from "./types/proxyBonding";
 import { isFunction, isObject } from "./utils";
 
 export function reaction<T>(data: T) {
@@ -11,22 +12,69 @@ export function reaction<T>(data: T) {
     return new Proxy(data, baseHandlers);
 }
 
+type Callback = () => unknown;
 
-export function doWatch(source: any, callback: any) {
-    const getter = () => {}
+export function useWatch(
+    source: Callback | Callback[], 
+    callback: (newV: unknown, oldV: unknown) => void
+): ReactiveEffectType {
+    
+    const getter = () => {
+        if (isFunction(source)) {
+            // @ts-ignore
+            return source();
+        }
+        else if (Array.isArray(source)) {
+            return source.map(fn => {
+                if (isFunction(fn)) {
+                    return fn()
+                }
+            })
+        }
+    }
+
+    let oldValue: unknown = getter();
+    let scheduler = function () {
+        if (callback) {
+            let newValue = getter();
+            callback(newValue, oldValue);
+            oldValue = newValue;
+        }
+        else {
+            effect.run();
+        }
+    }
+    const effect = new ReactiveEffect(() => {
+        try {
+            setActionElementId('watcher');
+            return getter();
+        }
+        catch(error) { console.error(error) }
+        finally {
+            setActionElementId(null);
+        }
+    }, scheduler);
+
+    effect.run();
+    return effect;
 }
 
 
 // 合并 proxy
 export function merge(...args: Record<string, any>[]) {
+    if (!args.length) return {};
     setActionElementId(null);
-    const initProxy = args.reduce((o, b) => ({...o, ...b}), {})
-    let handler = {
-        get: (target: any, key: any, receiver: any) => {
+    const initProxy = args.reduce((o, b) => {
+        if (!isObject(b)) throw new Error(`[merge data ${b} must be an object]`);
+        return {...o, ...b}
+    }, {});
+    
+    let handler: ProxyHandler<Record<any, any>> = {
+        get: (_target, key) => {
             let proxy = args.find(l => key in l) || args[0];
             return Reflect.get(proxy, key);
         },
-        set: (target: any, key: any, value: any) => {
+        set: (_target, key: string, value) => {
             let proxy = args.find(l => key in l) || args[0];
             if (proxy[key] != value) {
                 proxy[key] = value;
@@ -74,11 +122,11 @@ export function Component(callback: (
         data: {},
         methods: {},
         init(initData) {
-            let methodsObj: any = {}, proxy = initData;
+            let methodsObj: any = {};
             if (isFunction(initData)) {
                 // @ts-ignore
                 let {data, methods = {}, components = {}} = initData();
-                this.data = proxy = data;
+                this.data = data;
                 this.methods = methodsObj = methods;
                 this.components = components;
             } else {
@@ -102,11 +150,12 @@ export function Component(callback: (
         }
     })
 
-    const h = (props: any) => viewRender(
+    const h = (props: unknown) => viewRender(
         callback((instance as ComponrntProps), props),
         instance.data,
         instance.methods,
         instance.components,
+        props,
         cycleCallbacks
     );
     h.__type = ComponentKey
