@@ -2,6 +2,7 @@ import { DOM } from "../domBonding";
 import { 
     JumpUpdateForChildFlags, 
     UpdateAttributeFlags, 
+    UpdateComponentFlags, 
     UpdateForListAndAttributeFlags, 
     UpdateForListFlags, 
     UpdateTextFlags
@@ -290,14 +291,12 @@ function dfs(
     let len = child.length;
     let elemFlags = DOM.createElement(tagName || '', props, KEY, parent, text || '', index);
 
-    let primaryFlags = elemFlags & (UpdateTextFlags | UpdateAttributeFlags | UpdateForListFlags | JumpUpdateForChildFlags);
+    let primaryFlags = elemFlags & (UpdateTextFlags | UpdateAttributeFlags | UpdateForListFlags | JumpUpdateForChildFlags | UpdateComponentFlags);
     // if (lastList && lastList.parent === parent) {
     //     console.log('child', data, lastList, parent, 'JumpUpdateForChildFlags--JumpUpdateForChildFlags');
     //     // DOM.find(lastList.KEY);
     //     lastList = null;
     // }
-
-    // console.log(primaryFlags, UpdateForListFlags, lastList, data, parent, '==============================>>>')
 
     lastElement = {
         tagName, 
@@ -318,6 +317,9 @@ function dfs(
         case UpdateForListFlags:
             // lastList = {...data, parent};
             change.push(new Responsive('list', data));
+            break;
+        case UpdateComponentFlags:
+            change.push(new Responsive('component', data));
             break;
         case JumpUpdateForChildFlags:
 
@@ -384,6 +386,10 @@ function diff2(current: Responsive[], updates: string[]) {
                     break;
                 case "list":
                     DOM.updateList(data.KEY, updates.filter(l => l != data.KEY).join('>>>'));
+                    break;
+                case "component":
+                    const { props, KEY } = data;
+                    DOM.updateComponent(KEY, props);
                     break;
             }
         }

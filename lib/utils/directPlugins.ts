@@ -12,13 +12,27 @@ import { renderList } from "../proxyBonding/index.js";
 import { Stack } from "./index.js";
 
 
-// const baseDictOptions = {
-//     init (container) {
-//         if (!container.__childs) {
+const baseDictOptions = {
+    init (container) {
+        if (!container.__childs) {
+            const base = {
+                collectCallback: function({ payload }: any) {
+                    container.__payload = payload;
+                },
+                // match: function(this: any, elem: any, data: any) {
+                //     if (elem.__v_if) {
+                //         return true;
+                //     }
+                //     return false;
+                // }
+            }
 
-//         }
-//     }
-// }
+            Object.setPrototypeOf(ifDict, Stack);
+            container.__v_if = true;
+            container.__childs = ifDict;
+        }
+    }
+}
 
 export const directPlugins = {
     'v-if': (container: any, data: any, originValue: string, isFirstRender: boolean) => {
@@ -76,7 +90,6 @@ export const directPlugins = {
                 container.previousSibling.parentNode.replaceChild(el, container.previousSibling);
                 return;
             }
-            console.log(container.previousSibling, container)
             const { el, child, ...args } = container.__payload;
             let copyElement = getElementInProgress();
             try {
@@ -97,10 +110,9 @@ export const directPlugins = {
                 console.error(error);
             }
             finally {
-                console.log(getElementInProgress(), args, container.__KEY)
                 let d = getElementInProgress();
                 let e = matchParent(args.id, d);
-                let anchor = document.createTextNode('');
+                let anchor: any = document.createTextNode('');
                 anchor.__v_replace = e;
                 e.__v_anchor = anchor;
                 setElementInProgress(copyElement);
@@ -285,7 +297,6 @@ export const directPlugins = {
                     container.__payload = payload;
                     const { el, child, ...args } = payload;
                     let newChild = el.__v_originChild = child.slice();
-                    console.log(container)
                     let copyElement = getElementInProgress();
                     try {
                         setElementInProgress(el);

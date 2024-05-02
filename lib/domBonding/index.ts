@@ -2,9 +2,18 @@ import {
     JumpUpdateForChildFlags, 
     NoFlags,
     UpdateTextFlags,
-    UpdateAttributeFlags
+    UpdateAttributeFlags,
+    UpdateComponentFlags
 } from "../proxyBonding/flages";
-import { isFunction, isNumber, isTextElement, ParseTemplate, runWithCycleCallback, Stack } from "../utils";
+import {
+    isFunction,
+    isNumber,
+    isTextElement,
+    ParseTemplate,
+    runWithCycleCallback,
+    Stack,
+    syncComponentId
+} from "../utils";
 import {  
     ComponentKey,
     componentMap, 
@@ -88,17 +97,29 @@ export const DOM = {
             elementInProgress = starElement;
             data.insertElem = document.body;
         } else {
+            let content = actionContent[actionContent.length - 1] || {};
             const achor: any = document.createTextNode("");
+            if (content.type === "component") {
+                // 存在响应式参数 给组件添加标识
+                if (content.key === 'props' && Object.keys(content.val).length) {
+                    elemSetTemplate(achor, content.id, UpdateAttributeFlags);
+                }
+                achor.__KEY = content.id;
+            }
+            else {
+                achor.__KEY = elementId;
+            }
             achor.__type = ComponentKey;
-            achor.__KEY = elementId;
+            
             // console.log(elementInProgress, elementId, '?????');
             if (isTextElement(elementInProgress)) {
                 elementInProgress.parentNode.insertBefore(achor, elementInProgress.nextSibling);
             } else {
                 elementInProgress.appendChild(achor);
+                elementInProgress = achor;
             }
             
-            elementInProgress.__type = ComponentKey;
+            // elementInProgress.__type = ComponentKey;
             
             data.insertElem = achor;
             // elementInProgress.__type = ComponentKey;
@@ -148,6 +169,7 @@ export const DOM = {
             let elem = createVNodeElm(tag, props,  text, id, 'NULL', index);
             // elementInProgress.parentNode.insertBefore(elem, elementInProgress);
             if (isTextElement(elementInProgress)) {
+                syncComponentId(elementInProgress, id);
                 elementInProgress.parentNode.insertBefore(elem, elementInProgress);
             } else {
                 elementInProgress.appendChild(elem);
@@ -158,7 +180,7 @@ export const DOM = {
             if (Context.collectContextChild(records)) return JumpUpdateForChildFlags;
             if (elementInProgress.__KEY === parent) {
                 let elem = createVNodeElm(tag, props, text, id, parent, index);
-                if (!elem) return;
+                if (!elem) return UpdateComponentFlags;
                 // dict
                 if (Context.matchDictContext(elem, records)) {
                     elementInProgress.appendChild(elem);
@@ -171,7 +193,7 @@ export const DOM = {
             else {
                 let parentElem = matchParent(parent);
                 let elem = createVNodeElm(tag, props, text, id, parent, index);
-                if (!elem) return;
+                if (!elem) return UpdateComponentFlags;
                 // dict
                 if (Context.matchDictContext(elem, records)) {
                     elementInProgress = parentElem;
@@ -206,7 +228,7 @@ export const DOM = {
             if (elementInProgress.childNodes.length) {
                 childNodes = elementInProgress = elementInProgress.childNodes[0];
             } else {
-                let originComponnentKey = getElementIdToTemplateId(elementInProgress.__KEY);
+                let originComponentKey = getElementIdToTemplateId(elementInProgress.__KEY);
                 let next = elementInProgress, nextSibling;
                 while (!nextSibling && next) {
                     nextSibling = next.nextSibling || next.nextElementSibling;
@@ -219,7 +241,7 @@ export const DOM = {
                         }
                     }
                     // id 不同，跳过子组件
-                    else if (getElementIdToTemplateId(nextSibling.__KEY) != originComponnentKey) {
+                    else if (getElementIdToTemplateId(nextSibling.__KEY) != originComponentKey) {
                         next = nextSibling;
                         nextSibling = null;
                     }
@@ -251,6 +273,37 @@ export const DOM = {
                 if (data) {
                     childNodes.nodeValue = data.data[depName];
                 }
+            }
+        }
+    },
+
+    updateComponent(
+        id: string,
+        props: string
+    ) {
+        let data = componentMap.get(getElementIdToTemplateId(id));
+        if (!data) return;
+        // 获取组件插入位置
+        let activeEl = [...data.deps].find(l => l.__KEY === id);
+        // 获取原始组件 id
+        const componentId = activeEl.__componentId;
+        if (!componentId) return;
+
+        const prevProps = getPropsValue(props, activeEl.__KEY, activeEl.listIndex);
+        const newProps = {...prevProps.bind, ...prevProps.events};
+
+        const componentRecords = componentMap.get(getElementIdToTemplateId(componentId));
+        if (!componentRecords || !componentRecords.props) return;
+        for (const i in newProps) {
+            let newV = newProps[i];
+            let oldV = componentRecords.props[i];
+
+            if (newV !== oldV) {
+                // 更新data中props数据
+                // 连锁更新视图
+                componentRecords.data[i] = newV;
+                // 更新 回调中props
+                componentRecords.props[i] = newV;
             }
         }
     },
@@ -305,7 +358,7 @@ export const DOM = {
         })
     },
 
-    updateList(elementId: string, depsStr: string) {
+    updateList(elementId: string, _depsStr: string) {
         // let deps = depsStr.split('>>>');
         let templateID = getElementIdToTemplateId(elementId);
         let data = componentMap.get(templateID);
@@ -408,7 +461,7 @@ export function matchTemplate(
     let parseTemplate = Object.create(ParseTemplate);
 
     if (com_proxy) {
-        const fn = (proxy: any, methods: any) => {
+        const fn = (_proxy: any, methods: any) => {
             actionElementId = id;
             let match = parseTemplate.getMatchData();
             if(isFunction(match)) {
@@ -511,11 +564,12 @@ function createElementComponent(tagName: string, id: string, parent: string, pro
             if (!(elementInProgress.__KEY === id && isTextElement(elementInProgress))) {
                 elementInProgress = matchParent(parent, elementInProgress);
             }
-            actionContent.push({ type: 'component', key: id, val: 'null', id: 'null' });
-            Component({
+            let newProps = {
                 ...(props.bind || {}), 
                 ...(props.events || {})
-            });
+            }
+            actionContent.push({ type: 'component', key: 'props', val: newProps, id: id, });
+            Component(newProps);
         }
         catch (error) {
             console.error(error);

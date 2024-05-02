@@ -1,6 +1,7 @@
 import './style.css'
 import { 
   Component,
+  useWatch,
   merge,
   reaction
 } from '../lib/index';
@@ -39,8 +40,10 @@ const Child2 = Component((instance) => {
 
 
 const Child = Component((instance, props) => {
+    const {cb, ...args} = props;
     const state = reaction({
-        counnt: 0
+        counnt: 0,
+        ...args
     });
     const [countState, setCount] = useSetCount();
     const {
@@ -71,6 +74,7 @@ const Child = Component((instance, props) => {
     }
     methods.setCount = () => setCount((d: number) => d + 1);
     methods.cb = () => {
+        console.log(props)
         props.cb(props.data + 'hahah');
     };
     return (`
@@ -80,7 +84,7 @@ const Child = Component((instance, props) => {
             <button @click="setCount>Child num ++</button>
             <Child2></Child2>
             <button @click="cb">子传父 cb</button>
-            
+            <p>999{ data }8888</p>
         </div>
     `)
 })
@@ -118,6 +122,10 @@ const Example = Component((instance, props) => {
       console.log('Example -- onMount ================>>', props);
   });
 
+  useWatch(() => data.number, (newV, oldV) => {
+    console.log(newV, oldV);
+  });
+
   methods.handleSum = () => {
       data.number += 1
   }
@@ -130,7 +138,8 @@ const Example = Component((instance, props) => {
       let d = this.computeTest();
       console.log(d)
       data.name = 'cmr';
-      data.bool = !data.bool;
+    //   data.bool = !data.bool;
+    data.number += 1;
   }
   methods.spanClass = function () {
       return data.bool ? 'error' : 'success'
@@ -148,16 +157,14 @@ const Example = Component((instance, props) => {
   }
 
   return (`<div>                             
-                
-                <p v-if="bool">我是bool-v-if</p>
-                
-                
-                <Child :data="name" :bool="bool" @cb="cbb"></Child>
-                <Child v-show="bool"></Child>
-                
-                <button class="mt-but" @click="handleCancelDel">显示隐藏</button>
-                <Child v-if-new="bool"></Child>
-                <p>............{ bool }...............</p>
+            <p v-if="bool">我是bool-v-if</p>
+            { name }
+            <Child :data="name" :bool="bool" @cb="cbb"></Child>
+            <Child v-show="bool"></Child>
+            
+            <button class="mt-but" @click="handleCancelDel">显示隐藏</button>
+            <Child v-if-new="bool"></Child>
+            <p>............{ bool }...............</p>
         </div>`)
 });
 

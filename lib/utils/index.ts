@@ -1,6 +1,7 @@
 import { CycleCallbackFunctions, CycleCallbacks } from '..';
 import type { ParseTemplateThis } from '../types/paseHtmlTemplate'
 import { promise } from './scheduler';
+import {ComponentKey} from "../proxyBonding";
 
 
 export function isObject<T>(obj: T): boolean {
@@ -22,6 +23,13 @@ export function isNumber<T>(number: T): boolean {
 
 export function isTextElement(elem: Element): boolean {
     return elem.nodeType === 3
+}
+
+// 根据插入位置 同步组件id
+export function syncComponentId(textElem: any, componentId: string) {
+    if (textElem.__type === ComponentKey) {
+        textElem.__componentId = componentId;
+    }
 }
 
 export const Stack = {

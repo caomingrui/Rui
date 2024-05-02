@@ -109,18 +109,21 @@ function trigger(target: any, key: string) {
 }
 
 
-const ReactiveEffect = function (
+export const ReactiveEffect = function (
     this: ReactiveEffectType,
     fn: (deps: Dep[]) => void,
-    scope: Dep[] = [],
+    scheduler?: null | (() => void),
+    scope?: Dep[],
 )  {
     // 依赖
-    this.deps = scope;
+    this.deps = scope || [];
 
     // 变更
     this.updateDeps = [];
 
     this.parent = null;
+
+    this.scheduler = scheduler;
 
     this.run = function () {
         try {
@@ -134,7 +137,7 @@ const ReactiveEffect = function (
             this.parent = activeEffect;
 
             activeEffect = this;
-            fn(this.updateDeps);
+            return fn(this.updateDeps);
         } finally {
             activeEffect = this.parent;
             promise.then(() => this.clearUpdateDeps())
@@ -170,7 +173,11 @@ const ReactiveEffect = function (
         this.updateDeps = [];
     }
 } as any as {
-    new (fn: (deps: Dep[]) => void, scope: Dep[]): ReactiveEffectType;
+    new (
+        fn: (deps: Dep[]) => void, 
+        scheduler?: null | (() => void),
+        scope?: Dep[],
+    ): ReactiveEffectType;
 }
 
 
@@ -408,6 +415,7 @@ export function viewRender(
     data: any,
     methods: Record<string, any>,
     components: Record<string, any> | null = null,
+    _props?: Record<string, any> | unknown,
     onCycleCallbacks?: CycleCallbacks
 ) {
     if (data.__KEY) return data.__KEY;
@@ -421,7 +429,8 @@ export function viewRender(
         onCycleCallbacks,
         elem: null,
         components,
-        scope: []
+        scope: [],
+        props: _props || {},
     }
     
     let elementInProgress = getElementInProgress();
@@ -460,7 +469,7 @@ export function viewRender(
         
     }
 
-    let effect = new ReactiveEffect(updateComponent, componentMess.scope);
+    let effect = new ReactiveEffect(updateComponent, null, componentMess.scope);
     effect.run();
 
     return data.__KEY;

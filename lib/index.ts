@@ -98,11 +98,11 @@ type ComponentCycleCallback = {
 };
 
 
-type ComponrntProps<Optional extends boolean = true> = {
+type ComponentProps<Optional extends boolean = true> = {
     data: any;
     methods: any;
     components?: Record<string, any>;
-    init: (initData: Record<string, any> | (() => ComponrntProps)) => ComponrntProps
+    init: (initData: Record<string, any> | (() => ComponentProps)) => ComponentProps
 } & (Optional extends true ? ComponentCycleCallback : Partial<ComponentCycleCallback>);
 
 
@@ -113,12 +113,12 @@ export type CycleCallbackFunctions = keyof typeof CycleCallbackFunctionEnum
 }
 
 export function Component(callback: (
-    instance: ComponrntProps, 
+    instance: ComponentProps,
     props: any
 ) => string): Function {
     let cycleCallbacks: CycleCallbacks = {};
 
-    let instance: ComponrntProps<false> = {
+    let instance: ComponentProps<false> = {
         data: {},
         methods: {},
         init(initData) {
@@ -139,7 +139,7 @@ export function Component(callback: (
                     return true;
                 }
             })
-            return this as ComponrntProps
+            return this as ComponentProps
         }
     };
 
@@ -150,14 +150,23 @@ export function Component(callback: (
         }
     })
 
-    const h = (props: unknown) => viewRender(
-        callback((instance as ComponrntProps), props),
-        instance.data,
-        instance.methods,
-        instance.components,
-        props,
-        cycleCallbacks
-    );
+    const h = (props: unknown) => {
+        const proxyProps = props? new Proxy(props, {
+            get: (_target, key) => Reflect.get(_target, key),
+            set: (_target: any, _key: string, _value) => {
+                _target[_key] = _value;
+                return true;
+            }
+        }): {};
+        return viewRender(
+            callback((instance as ComponentProps), proxyProps),
+            instance.data,
+            instance.methods,
+            instance.components,
+            proxyProps,
+            cycleCallbacks
+        );
+    }
     h.__type = ComponentKey
     return h;
 }
