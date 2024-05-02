@@ -298,10 +298,12 @@ export const DOM = {
             let newV = newProps[i];
             let oldV = componentRecords.props[i];
 
+            // 更新data中props数据
             if (newV !== oldV) {
-                // 更新data中props数据
                 // 连锁更新视图
-                componentRecords.data[i] = newV;
+                if (i in componentRecords.data) {
+                    componentRecords.data[i] = newV;
+                }
                 // 更新 回调中props
                 componentRecords.props[i] = newV;
             }

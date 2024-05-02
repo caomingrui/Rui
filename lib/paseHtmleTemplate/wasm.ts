@@ -139,7 +139,7 @@ export function wasmParse(html_s: string, templateKEY: string): ElementStack {
             }
 
             if (attr != null) {
-                attr += char;
+                attr += (char === "'"? '"': char);
             }
         }
 

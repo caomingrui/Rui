@@ -80,8 +80,8 @@ const Child = Component((instance, props) => {
     return (`
         <div>
             <p>num: {counnt} --- {count}</p>
-            <button @click="handleTest>Child num ++</button>
-            <button @click="setCount>Child num ++</button>
+            <button @click="handleTest">Child num ++</button>
+            <button @click="setCount">Child num ++</button>
             <Child2></Child2>
             <button @click="cb">子传父 cb</button>
             <p>999{ data }8888</p>
@@ -157,7 +157,7 @@ const Example = Component((instance, props) => {
   }
 
   return (`<div>                             
-            <p v-if="bool">我是bool-v-if</p>
+            <p v-if='bool'>我是bool-v-if</p>
             { name }
             <Child :data="name" :bool="bool" @cb="cbb"></Child>
             <Child v-show="bool"></Child>
