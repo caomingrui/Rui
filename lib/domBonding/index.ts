@@ -78,139 +78,11 @@ const Context = Object.setPrototypeOf({
 }, Stack);
 
 export const DOM = {
-    
-    startComponent(elementId: string) {
-        let componentId = getElementIdToTemplateId(elementId);
-        let componentRecord = componentMap.get(componentId);
-        let starElement = document.createDocumentFragment();
+    startComponent,
 
-        if (!componentRecord) return;
+    endComponent,
 
-        const data: ComponentMapType = {
-            ...componentRecord,
-            elem: starElement,
-            deps: new Set(),
-            listDeps: new Map(),
-        }
-        // 组件首次插入
-        if (!elementInProgress) {
-            elementInProgress = starElement;
-            data.insertElem = document.body;
-        } else {
-            let content = actionContent[actionContent.length - 1] || {};
-            const achor: any = document.createTextNode("");
-            if (content.type === "component") {
-                // 存在响应式参数 给组件添加标识
-                if (content.key === 'props' && Object.keys(content.val).length) {
-                    elemSetTemplate(achor, content.id, UpdateAttributeFlags);
-                }
-                achor.__KEY = content.id;
-            }
-            else {
-                achor.__KEY = elementId;
-            }
-            achor.__type = ComponentKey;
-            
-            // console.log(elementInProgress, elementId, '?????');
-            if (isTextElement(elementInProgress)) {
-                elementInProgress.parentNode.insertBefore(achor, elementInProgress.nextSibling);
-            } else {
-                elementInProgress.appendChild(achor);
-                elementInProgress = achor;
-            }
-            
-            // elementInProgress.__type = ComponentKey;
-            
-            data.insertElem = achor;
-            // elementInProgress.__type = ComponentKey;
-            // data.insertElem = elementInProgress;
-        }
-
-        componentMap.set(componentId, data);
-
-        runWithCycleCallback(data.onCycleCallbacks, 'useBefored');
-    },
-
-    endComponent(
-        tag: string,
-        props: string,
-        id: string,
-        parent: string  | null,
-        text: string,
-        index: number
-    ) {
-        if (elementInProgress.__KEY != id) {
-            this.createElement(tag, props, id, parent, text, index);
-        }
-        let componentId = getElementIdToTemplateId(id);
-        let componentRecord = componentMap.get(componentId);
-        if (componentRecord) {
-            const {
-                insertElem,
-                onCycleCallbacks,
-                elem,
-            } = componentRecord;
-            !isTextElement(insertElem) && insertElem.appendChild(elem);
-
-            runWithCycleCallback(onCycleCallbacks, 'useMounted');
-        }
-    },
-
-    createElement(
-        tag: string,
-        props: string,
-        id: string,
-        parent: string  | null,
-        text: string,
-        index: number | null
-    ) {
-        const records = { tag, props, id, parent, text, index };
-        if (!parent) {
-            let elem = createVNodeElm(tag, props,  text, id, 'NULL', index);
-            // elementInProgress.parentNode.insertBefore(elem, elementInProgress);
-            if (isTextElement(elementInProgress)) {
-                syncComponentId(elementInProgress, id);
-                elementInProgress.parentNode.insertBefore(elem, elementInProgress);
-            } else {
-                elementInProgress.appendChild(elem);
-            }
-            elementInProgress = elem;
-        } else {
-            //  收集修饰符子节点
-            if (Context.collectContextChild(records)) return JumpUpdateForChildFlags;
-            if (elementInProgress.__KEY === parent) {
-                let elem = createVNodeElm(tag, props, text, id, parent, index);
-                if (!elem) return UpdateComponentFlags;
-                // dict
-                if (Context.matchDictContext(elem, records)) {
-                    elementInProgress.appendChild(elem);
-                    return elem.__is_template;
-                } else {
-                    elementInProgress.appendChild(elem);
-                    elementInProgress = elem;
-                }
-            }
-            else {
-                let parentElem = matchParent(parent);
-                let elem = createVNodeElm(tag, props, text, id, parent, index);
-                if (!elem) return UpdateComponentFlags;
-                // dict
-                if (Context.matchDictContext(elem, records)) {
-                    elementInProgress = parentElem;
-                    parentElem.appendChild(elem);
-                    return elem.__is_template;
-                } else {
-                    if (elementInProgress.__KEY === id && isTextElement(elementInProgress)) {
-                        parentElem.insertBefore(elem, elementInProgress);
-                    } else {
-                        parentElem.appendChild(elem);
-                    }
-                    elementInProgress = elem;
-                }
-            }
-        }
-        return elementInProgress.__is_template;
-    },
+    createElement,
 
     updateForChild(container: any, data: ElementType, deps: ListTemplateDepType[], indexMess: [number, number]) {
         let { text, isResponsiveElem, id, props, originTag, flags, listIndex, tag, parent } = data;
@@ -218,7 +90,7 @@ export const DOM = {
 
         switch (flags) {
             case 'ADD':
-                // DOM.createForChild(elementInProgress, data);
+                // DOM.ts.createForChild(elementInProgress, data);
                 DOM.createElement(tag, props, id, parent, text, listIndex || null)
                 return;
         }
@@ -277,56 +149,11 @@ export const DOM = {
         }
     },
 
-    updateComponent(
-        id: string,
-        props: string
-    ) {
-        let data = componentMap.get(getElementIdToTemplateId(id));
-        if (!data) return;
-        // 获取组件插入位置
-        let activeEl = [...data.deps].find(l => l.__KEY === id);
-        // 获取原始组件 id
-        const componentId = activeEl.__componentId;
-        if (!componentId) return;
+    updateComponent,
 
-        const prevProps = getPropsValue(props, activeEl.__KEY, activeEl.listIndex);
-        const newProps = {...prevProps.bind, ...prevProps.events};
+    updateText,
 
-        const componentRecords = componentMap.get(getElementIdToTemplateId(componentId));
-        if (!componentRecords || !componentRecords.props) return;
-        for (const i in newProps) {
-            let newV = newProps[i];
-            let oldV = componentRecords.props[i];
-
-            // 更新data中props数据
-            if (newV !== oldV) {
-                // 连锁更新视图
-                if (i in componentRecords.data) {
-                    componentRecords.data[i] = newV;
-                }
-                // 更新 回调中props
-                componentRecords.props[i] = newV;
-            }
-        }
-    },
-
-    updateText(elementId: string, param: string) {
-        let templateID = getElementIdToTemplateId(elementId);
-        let data = componentMap.get(templateID);
-        if (data) {
-            let activeEl = [...data.deps].find(l => l.__KEY === elementId);
-            activeEl.nodeValue = data.data[param];
-        }
-    },
-
-    updateAttribute(elementId: string, param: string) {
-        let templateID = getElementIdToTemplateId(elementId);
-        let data = componentMap.get(templateID);
-        if (data) {
-            let activeEl = [...data.deps].find(l => l.__KEY === elementId);
-            parseProps(activeEl, param, false);
-        }
-    },
+    updateAttribute,
 
     removeElement(el: any) {
         let list: string[] = [];
@@ -360,46 +187,240 @@ export const DOM = {
         })
     },
 
-    updateList(elementId: string, _depsStr: string) {
-        // let deps = depsStr.split('>>>');
-        let templateID = getElementIdToTemplateId(elementId);
-        let data = componentMap.get(templateID);
-        if (data) {
-            let activeEl = [...data.deps].find(l => l.__KEY === elementId);
-            let originChild = activeEl.__v_originChild;
-            let lastUpdates = componentMap.get('_lastUpdate') as any as Dep[];
-            let { data: oldList, key, val } = activeEl.__v_for;
-            let newList = data.data[val];
-            actionContent.push({key, val, id: elementId, type: 'for'});
-            try {
-                let locateMap = patchList(activeEl, oldList, newList);
-                newList = newList.map((res: Record<string, any>, ind: number) => {
-                    let map = locateMap.get(ind) || {};
-                    return {...res, ...map}
-                });
-                // BUG
-                elementInProgress = activeEl.previousSibling.childNodes[0] || {};
-                // BUG 不优雅
-                let star = Number(elementInProgress.__KEY.split('@@')[1].split('-')[0])
-                let forDeps = data.listDeps.get(elementId);
-                if (!forDeps) return;
-                let deps = forDeps.list
-                    .filter(l => lastUpdates.find(d => d.key === l.text));
-                renderList(originChild, newList, key, star).forEach((c, ind) => {
-                    DOM.updateForChild(activeEl, c, deps, [originChild.length, ind]);
-                });
-            }
-            finally {
-                actionContent.pop();
-                activeEl.__v_for.data = newList;
-            }
-        }
-    },
+    updateList,
 
     replaceElement() {},
 
     find() {}
 }
+
+export function startComponent(elementId: string) {
+    let componentId = getElementIdToTemplateId(elementId);
+    let componentRecord = componentMap.get(componentId);
+    let starElement = document.createDocumentFragment();
+
+    if (!componentRecord) return;
+
+    const data: ComponentMapType = {
+        ...componentRecord,
+        elem: starElement,
+        deps: new Set(),
+        listDeps: new Map(),
+    }
+    // 组件首次插入
+    if (!elementInProgress) {
+        elementInProgress = starElement;
+        data.insertElem = document.body;
+    } else {
+        let content = actionContent[actionContent.length - 1] || {};
+        const achor: any = document.createTextNode("");
+        if (content.type === "component") {
+            // 存在响应式参数 给组件添加标识
+            if (content.key === 'props' && Object.keys(content.val).length) {
+                elemSetTemplate(achor, content.id, UpdateAttributeFlags);
+            }
+            achor.__KEY = content.id;
+        }
+        else {
+            achor.__KEY = elementId;
+        }
+        achor.__type = ComponentKey;
+        
+        // console.log(elementInProgress, elementId, '?????');
+        if (isTextElement(elementInProgress)) {
+            elementInProgress.parentNode.insertBefore(achor, elementInProgress.nextSibling);
+        } else {
+            elementInProgress.appendChild(achor);
+            elementInProgress = achor;
+        }
+        
+        // elementInProgress.__type = ComponentKey;
+        
+        data.insertElem = achor;
+        // elementInProgress.__type = ComponentKey;
+        // data.insertElem = elementInProgress;
+    }
+
+    componentMap.set(componentId, data);
+
+    runWithCycleCallback(data.onCycleCallbacks, 'useBefored');
+}
+
+
+export function endComponent(
+    tag: string,
+    props: string,
+    id: string,
+    parent: string  | null,
+    text: string,
+    index: number
+) {
+    if (elementInProgress.__KEY != id) {
+        createElement(tag, props, id, parent, text, index);
+    }
+    let componentId = getElementIdToTemplateId(id);
+    let componentRecord = componentMap.get(componentId);
+    if (componentRecord) {
+        const {
+            insertElem,
+            onCycleCallbacks,
+            elem,
+        } = componentRecord;
+        !isTextElement(insertElem) && insertElem.appendChild(elem);
+
+        runWithCycleCallback(onCycleCallbacks, 'useMounted');
+    }
+}
+
+
+export function createElement(
+    tag: string,
+    props: string,
+    id: string,
+    parent: string  | null,
+    text: string,
+    index: number | null
+) {
+    const records = { tag, props, id, parent, text, index };
+    if (!parent) {
+        let elem = createVNodeElm(tag, props,  text, id, 'NULL', index);
+        // elementInProgress.parentNode.insertBefore(elem, elementInProgress);
+        if (isTextElement(elementInProgress)) {
+            syncComponentId(elementInProgress, id);
+            elementInProgress.parentNode.insertBefore(elem, elementInProgress);
+        } else {
+            elementInProgress.appendChild(elem);
+        }
+        elementInProgress = elem;
+    } else {
+        //  收集修饰符子节点
+        if (Context.collectContextChild(records)) return JumpUpdateForChildFlags;
+        if (elementInProgress.__KEY === parent) {
+            let elem = createVNodeElm(tag, props, text, id, parent, index);
+            if (!elem) return UpdateComponentFlags;
+            // dict
+            if (Context.matchDictContext(elem, records)) {
+                elementInProgress.appendChild(elem);
+                return elem.__is_template;
+            } else {
+                elementInProgress.appendChild(elem);
+                elementInProgress = elem;
+            }
+        }
+        else {
+            let parentElem = matchParent(parent);
+            let elem = createVNodeElm(tag, props, text, id, parent, index);
+            if (!elem) return UpdateComponentFlags;
+            // dict
+            if (Context.matchDictContext(elem, records)) {
+                elementInProgress = parentElem;
+                parentElem.appendChild(elem);
+                return elem.__is_template;
+            } else {
+                if (elementInProgress.__KEY === id && isTextElement(elementInProgress)) {
+                    parentElem.insertBefore(elem, elementInProgress);
+                } else {
+                    parentElem.appendChild(elem);
+                }
+                elementInProgress = elem;
+            }
+        }
+    }
+    return elementInProgress.__is_template;
+}
+
+
+export function updateComponent(
+    id: string,
+    props: string
+) {
+    let data = componentMap.get(getElementIdToTemplateId(id));
+    if (!data) return;
+    // 获取组件插入位置
+    let activeEl = [...data.deps].find(l => l.__KEY === id);
+    // 获取原始组件 id
+    const componentId = activeEl.__componentId;
+    if (!componentId) return;
+
+    const prevProps = getPropsValue(props, activeEl.__KEY, activeEl.listIndex);
+    const newProps = {...prevProps.bind, ...prevProps.events};
+
+    const componentRecords = componentMap.get(getElementIdToTemplateId(componentId));
+    if (!componentRecords || !componentRecords.props) return;
+    for (const i in newProps) {
+        let newV = newProps[i];
+        let oldV = componentRecords.props[i];
+
+        // 更新data中props数据
+        if (newV !== oldV) {
+            // 连锁更新视图
+            if (i in componentRecords.data) {
+                componentRecords.data[i] = newV;
+            }
+            // 更新 回调中props
+            componentRecords.props[i] = newV;
+        }
+    }
+}
+
+
+export function updateText(elementId: string, param: string) {
+    let templateID = getElementIdToTemplateId(elementId);
+    let data = componentMap.get(templateID);
+    if (data) {
+        let activeEl = [...data.deps].find(l => l.__KEY === elementId);
+        activeEl.nodeValue = data.data[param];
+    }
+}
+
+
+export function updateAttribute(elementId: string, param: string) {
+    let templateID = getElementIdToTemplateId(elementId);
+    let data = componentMap.get(templateID);
+    if (data) {
+        let activeEl = [...data.deps].find(l => l.__KEY === elementId);
+        parseProps(activeEl, param, false);
+    }
+}
+
+
+export function updateList(elementId: string, _depsStr: string) {
+    // let deps = depsStr.split('>>>');
+    let templateID = getElementIdToTemplateId(elementId);
+    let data = componentMap.get(templateID);
+    if (data) {
+        let activeEl = [...data.deps].find(l => l.__KEY === elementId);
+        let originChild = activeEl.__v_originChild;
+        let lastUpdates = componentMap.get('_lastUpdate') as any as Dep[];
+        let { data: oldList, key, val } = activeEl.__v_for;
+        let newList = data.data[val];
+        actionContent.push({key, val, id: elementId, type: 'for'});
+        try {
+            let locateMap = patchList(activeEl, oldList, newList);
+            newList = newList.map((res: Record<string, any>, ind: number) => {
+                let map = locateMap.get(ind) || {};
+                return {...res, ...map}
+            });
+            // BUG
+            elementInProgress = activeEl.previousSibling.childNodes[0] || {};
+            // BUG 不优雅
+            let star = Number(elementInProgress.__KEY.split('@@')[1].split('-')[0])
+            let forDeps = data.listDeps.get(elementId);
+            if (!forDeps) return;
+            let deps = forDeps.list
+                .filter(l => lastUpdates.find(d => d.key === l.text));
+            renderList(originChild, newList, key, star).forEach((c, ind) => {
+                DOM.updateForChild(activeEl, c, deps, [originChild.length, ind]);
+            });
+        }
+        finally {
+            actionContent.pop();
+            activeEl.__v_for.data = newList;
+        }
+    }
+}
+
+
 
 export function matchParent(parentId: string, elem = elementInProgress): Element {
     if (elem.__KEY === parentId) {

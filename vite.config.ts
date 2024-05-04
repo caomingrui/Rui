@@ -7,5 +7,6 @@ export default defineConfig({
       name: 'Counter',
       fileName: 'counter'
     }
-  }
+  },
+  plugins: []
 })

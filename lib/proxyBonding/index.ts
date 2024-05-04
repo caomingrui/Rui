@@ -11,7 +11,8 @@ import type {
 } from '../types/proxyBonding';
 import { ParseTemplate, generateRandomHash, isPromise, runWithCycleCallback } from '../utils';
 import scheduler, { promise } from '../utils/scheduler';
-
+import * as parseWasm from '../paseHtmleTemplate'
+console.log(parseWasm)
 
 export const targetMap: WeakMap<
     Object,
@@ -445,7 +446,8 @@ export function viewRender(
     let oldStack: Responsive[] | null = null,
         prevStack: Responsive[] | null = null;
     // wasm
-    let stack = wasmParse(template.trim(), templateID)
+    let stack = parseWasm.wasmParse(template.trim(), templateID)
+    // let stack = (template.trim(), templateID)
     console.log(stack);
 
     function updateComponent(updates: Dep[]) {
@@ -456,12 +458,12 @@ export function viewRender(
         }
         if (oldStack === null) {
             // wasm
-            prevStack = wasmRender(stack.stack[0]);
+            prevStack = parseWasm.wasmRender(stack.stack[0]);
         }
         // diff
         else {
             // wasm
-            prevStack && wasmPacth(prevStack, updates.map(l => l.id).join('>>>'));
+            prevStack && parseWasm.wasmPacth(prevStack, updates.map(l => l.id).join('>>>'));
             
             onCycleCallbacks && runWithCycleCallback(onCycleCallbacks, 'useUpdated');
         }
