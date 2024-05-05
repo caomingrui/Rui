@@ -1,7 +1,14 @@
 
 
 export declare function startComponent(elementId: string): void;
-export declare function endComponent(elementId: string): void;
+export declare function endComponent(
+    tag: string,
+    props: string,
+    id: string,
+    parent: string  | null,
+    text: string,
+    index: number
+): void;
 export declare function createElement(
     tag: string,
     props: string,
@@ -16,3 +23,7 @@ export declare function updateAttribute(elementId: string, param: string): void;
 
 export declare function updateList(elementId: string, _depsStr: string): void;
 export declare function updateComponent(id: string, props: string): void;
+
+
+
+export  declare function log(log: string): void;

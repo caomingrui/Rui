@@ -195,6 +195,7 @@ export const DOM = {
 }
 
 export function startComponent(elementId: string) {
+    console.log(elementId)
     let componentId = getElementIdToTemplateId(elementId);
     let componentRecord = componentMap.get(componentId);
     let starElement = document.createDocumentFragment();
@@ -255,6 +256,7 @@ export function endComponent(
     text: string,
     index: number
 ) {
+    console.log(id)
     if (elementInProgress.__KEY != id) {
         createElement(tag, props, id, parent, text, index);
     }
@@ -281,6 +283,7 @@ export function createElement(
     text: string,
     index: number | null
 ) {
+    console.log(tag)
     const records = { tag, props, id, parent, text, index };
     if (!parent) {
         let elem = createVNodeElm(tag, props,  text, id, 'NULL', index);
@@ -420,7 +423,9 @@ export function updateList(elementId: string, _depsStr: string) {
     }
 }
 
-
+export function log(s: string) {
+    console.log(s, 'log');
+}
 
 export function matchParent(parentId: string, elem = elementInProgress): Element {
     if (elem.__KEY === parentId) {

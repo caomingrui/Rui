@@ -105,7 +105,7 @@ class ElementStack {
   }
 }
 
-export function wasmParse(html_s: string, templateKEY: string): ElementStack {
+export function wasmParse(html_s: string, templateKEY: string): CreateElement[] {
   const Identifier = new ParseIdentifier();
   const stack = new ElementStack();
   let element = new CreateElement(null, '', [], templateKEY);
@@ -254,7 +254,7 @@ export function wasmParse(html_s: string, templateKEY: string): ElementStack {
     }
   }
 
-  return stack;
+  return stack.stack;
 }
 
 
@@ -290,6 +290,7 @@ class LastElement {
     this.parent = parent;
     this.text = text;
     this.index = index;
+    DOM.log(this.KEY);
   }
 }
 
@@ -307,6 +308,8 @@ function dfs(
   let text = unchecked(data.text)
 
   let len = child.length;
+
+
   let elemFlags = DOM.createElement(tagName || '', props, KEY, parent, text || '', index);
 
   let primaryFlags = elemFlags & (
@@ -346,11 +349,19 @@ function dfs(
   }
 }
 
-export function wasmRender(elem: CreateElement): Responsive[] {
+export function wasmRender(elems: CreateElement[]): Responsive[] {
   let change: Responsive[] = [];
+  let elem = elems[0];
   DOM.startComponent(elem.KEY);
   dfs(elem, null, 0, change);
-  DOM.endComponent(lastElement.tagName || '');
+  DOM.endComponent(
+      lastElement.tagName,
+      lastElement.props,
+      lastElement.KEY,
+      lastElement.parent,
+      lastElement.text,
+      lastElement.index
+  );
   return change;
 }
 
@@ -419,6 +430,6 @@ function diff2(current: Responsive[], updates: string[]): void {
   }
 }
 
-export const sum= (n : i32): i32 => {
-  return n + 1;
+export function sum (d: CreateElement[]): string {
+  return d[0].tagName || 'default';
 }

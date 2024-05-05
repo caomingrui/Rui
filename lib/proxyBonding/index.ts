@@ -12,7 +12,6 @@ import type {
 import { ParseTemplate, generateRandomHash, isPromise, runWithCycleCallback } from '../utils';
 import scheduler, { promise } from '../utils/scheduler';
 import * as parseWasm from '../paseHtmleTemplate'
-console.log(parseWasm)
 
 export const targetMap: WeakMap<
     Object,
@@ -447,9 +446,6 @@ export function viewRender(
         prevStack: Responsive[] | null = null;
     // wasm
     let stack = parseWasm.wasmParse(template.trim(), templateID)
-    // let stack = (template.trim(), templateID)
-    console.log(stack);
-
     function updateComponent(updates: Dep[]) {
         console.log("本轮updates ==> ", prevStack, updates, getElementInProgress());
         if (updates.length) {
@@ -458,12 +454,13 @@ export function viewRender(
         }
         if (oldStack === null) {
             // wasm
-            prevStack = parseWasm.wasmRender(stack.stack[0]);
+            prevStack = parseWasm.wasmRender(stack);
+            console.log(prevStack)
         }
         // diff
         else {
             // wasm
-            prevStack && parseWasm.wasmPacth(prevStack, updates.map(l => l.id).join('>>>'));
+            prevStack && parseWasm.wasmPatch(prevStack, updates.map(l => l.id).join('>>>'));
             
             onCycleCallbacks && runWithCycleCallback(onCycleCallbacks, 'useUpdated');
         }
