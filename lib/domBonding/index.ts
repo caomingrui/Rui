@@ -110,8 +110,7 @@ export const DOM = {
                 achor.__KEY = elementId;
             }
             achor.__type = ComponentKey;
-            
-            // console.log(elementInProgress, elementId, '?????');
+
             if (isTextElement(elementInProgress)) {
                 elementInProgress.parentNode.insertBefore(achor, elementInProgress.nextSibling);
             } else {
@@ -213,7 +212,18 @@ export const DOM = {
     },
 
     updateForChild(container: any, data: ElementType, deps: ListTemplateDepType[], indexMess: [number, number]) {
-        let { text, isResponsiveElem, id, props, originTag, flags, listIndex, tag, parent } = data;
+        let {
+            text,
+            isResponsiveElem,
+            id,
+            props,
+            originTag,
+            flags,
+            listIndex,
+            tag,
+            parent
+        } = data;
+
         let childNodes;
 
         switch (flags) {
@@ -361,7 +371,6 @@ export const DOM = {
     },
 
     updateList(elementId: string, _depsStr: string) {
-        // let deps = depsStr.split('>>>');
         let templateID = getElementIdToTemplateId(elementId);
         let data = componentMap.get(templateID);
         if (data) {

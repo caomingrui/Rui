@@ -1,4 +1,4 @@
-import { setActionElementId } from "./domBonding";
+import {getElementInProgress, setActionElementId, setElementInProgress} from "./domBonding";
 import { ComponentKey, ReactiveEffect, baseHandlers, targetMap, viewRender } from "./proxyBonding";
 import { ReactiveEffectType } from "./types/proxyBonding";
 import { isFunction, isObject } from "./utils";
@@ -169,4 +169,28 @@ export function Component(callback: (
     }
     h.__type = ComponentKey
     return h;
+}
+
+
+function CreateProject(elem: Element) {
+    this.rootEl = elem;
+
+    this.render = function (fn) {
+        let elementInProgress = getElementInProgress();
+        try {
+            setElementInProgress(elem);
+            fn();
+        }
+        catch (e) {
+            console.log(`ERROR [render]::`, e);
+        }
+        finally {
+            setElementInProgress(elementInProgress);
+        }
+    }
+}
+
+export function createRoot(elem: Element, options) {
+    if (!elem) throw new Error('elem is null');
+    return new CreateProject(elem);
 }

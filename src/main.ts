@@ -1,9 +1,10 @@
 import './style.css'
-import { 
-  Component,
-  useWatch,
-  merge,
-  reaction
+import {
+    Component,
+    useWatch,
+    merge,
+    reaction,
+    createRoot
 } from '../lib';
 import { isFunction, isNumber } from '../lib/utils';
 
@@ -210,4 +211,7 @@ const Example = Component((instance, props) => {
 //                     </div>
 //                 </div>
 //                 <Child></Child>
-Example({ data: '???' });
+
+const APP = document.getElementById('app');
+const root = createRoot(APP);
+root.render(Example.bind(null, { data: '???' }));
