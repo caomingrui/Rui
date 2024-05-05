@@ -294,7 +294,7 @@ function dfs(
     let primaryFlags = elemFlags & (UpdateTextFlags | UpdateAttributeFlags | UpdateForListFlags | JumpUpdateForChildFlags | UpdateComponentFlags);
     // if (lastList && lastList.parent === parent) {
     //     console.log('child', data, lastList, parent, 'JumpUpdateForChildFlags--JumpUpdateForChildFlags');
-    //     // DOM.find(lastList.KEY);
+    //     // DOM.ts.find(lastList.KEY);
     //     lastList = null;
     // }
 
