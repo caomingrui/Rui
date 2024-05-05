@@ -404,28 +404,6 @@ function diff2(current: Responsive[], updates: string[]): void {
         DOM.updateComponent(KEY, data.props);
         continue
       }
-      // switch(type) {
-      //   case "text":
-      //     DOM.updateText(KEY, data.text || '');
-      //     break;
-      //   case "attr":
-      //     DOM.updateAttribute(KEY, data.props);
-      //     break;
-      //   case "list":
-      //     let l: string[] = [];
-      //     for (let key= 0; key < updates.length; key ++) {
-      //       if (updates[key] === KEY) {
-      //         l.push(updates[key])
-      //       }
-      //     }
-      //     DOM.updateList(KEY, l.join('>>>'));
-      //     break;
-      //   case "component":
-      //     DOM.updateComponent(KEY, data.props);
-      //     break;
-      //   default:
-      //     break;
-      // }
     }
   }
 }

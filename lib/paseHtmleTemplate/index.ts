@@ -1,1 +1,1 @@
-export * as parseWasm from './build/release';
+export * as parseWasm from '@/paseHtmleTemplate/build/release';

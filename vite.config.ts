@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import path from 'path'
 
 export default defineConfig({
   build: {
@@ -8,5 +9,10 @@ export default defineConfig({
       fileName: 'counter'
     }
   },
-  plugins: []
+  plugins: [],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './lib'),
+    }
+  }
 })

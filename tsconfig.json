@@ -5,6 +5,9 @@
     "module": "ESNext",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
+    "paths": {
+      "@/*": ["lib/*"]
+    },
 
     /* Bundler mode */
     "moduleResolution": "Bundler",
@@ -19,5 +22,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src", "lib/**/*.d.ts", "lib/**/*.ts", "lib/**/*.js"]
 }

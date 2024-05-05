@@ -1,6 +1,5 @@
 import { CycleCallbacks } from '..';
-import { DOM, actionContent, getActionElementId, getElementIdToTemplateId, getElementInProgress } from '../domBonding';
-import { Responsive, wasmPacth, wasmParse, wasmRender } from '../paseHtmleTemplate/wasm';
+import { DOM, actionContent, getActionElementId, getElementIdToTemplateId, getElementInProgress } from '@/domBonding';
 import type { 
     ReactiveEffectType,
     ListTemplateListType,
@@ -9,9 +8,14 @@ import type {
     ListTemplateDepType,
     ElementType
 } from '../types/proxyBonding';
-import { ParseTemplate, generateRandomHash, isPromise, runWithCycleCallback } from '../utils';
+import { ParseTemplate, generateRandomHash, isPromise, runWithCycleCallback } from '@/utils';
 import scheduler, { promise } from '../utils/scheduler';
-import * as parseWasm from '../paseHtmleTemplate'
+import {
+    wasmParse,
+    wasmRender,
+    wasmPatch,
+    __Internref10
+} from '@/paseHtmleTemplate/build/release'
 
 export const targetMap: WeakMap<
     Object,
@@ -235,7 +239,6 @@ export function patchList(container: any, oldList: any[], newList: any[]) {
         }
 
 
-        let moved = false;
         let lastNewIndexSoFar = 0;
         let patched = 0;
         const toBePatched = n2 - index + 1
@@ -281,7 +284,6 @@ export function patchList(container: any, oldList: any[], newList: any[]) {
                 if (newIndex >= lastNewIndexSoFar) {
                     lastNewIndexSoFar = newIndex;
                 } else {
-                    moved = true;
                 }
 
                 patched++;
@@ -442,25 +444,24 @@ export function viewRender(
     data.__KEY = templateID;
     
 
-    let oldStack: Responsive[] | null = null,
-        prevStack: Responsive[] | null = null;
+    let oldStack: __Internref10[] | null = null,
+        prevStack: __Internref10[] | null = null;
     // wasm
-    let stack = parseWasm.wasmParse(template.trim(), templateID)
+    let stack = wasmParse(template.trim(), templateID)
     function updateComponent(updates: Dep[]) {
-        console.log("本轮updates ==> ", prevStack, updates, getElementInProgress());
+        console.info("本轮updates ==> ", updates);
         if (updates.length) {
             // @ts-ignore
             componentMap.set('_lastUpdate', [...updates]);
         }
         if (oldStack === null) {
             // wasm
-            prevStack = parseWasm.wasmRender(stack);
-            console.log(prevStack)
+            prevStack = wasmRender(stack);
         }
         // diff
         else {
             // wasm
-            prevStack && parseWasm.wasmPatch(prevStack, updates.map(l => l.id).join('>>>'));
+            prevStack && wasmPatch(prevStack, updates.map(l => l.id).join('>>>'));
             
             onCycleCallbacks && runWithCycleCallback(onCycleCallbacks, 'useUpdated');
         }
