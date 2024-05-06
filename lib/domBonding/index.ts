@@ -473,7 +473,7 @@ export function matchTemplateString(id: string, params: string) {
     if(match.fn) {
         innerText = match.fn();
     } else {
-        innerText = match.data.toString() || '';
+        innerText = match.data?.toString() || '';
     }
 
     return innerText;

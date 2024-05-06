@@ -23,7 +23,7 @@ export function getPropsValue(
     const value: PropsType = {};
     for (let i = 0; i < props_list.length; i+=2) {
         let k = props_list[i].substring(0, props_list[i].indexOf('=')).trim();
-        if (k === '') continue;
+        if (k === '' || ( i + 1) >= props_list.length) continue;
         let v = props_list[i + 1].trim();
         let n1 = k.slice(0,1), n2 = k.slice(0, 2);
 
