@@ -10,13 +10,17 @@ import type {
 } from '../types/proxyBonding';
 import { ParseTemplate, generateRandomHash, isPromise, runWithCycleCallback } from '@/utils';
 import scheduler, { promise } from '../utils/scheduler';
-import {wasmParse as wasmParse_2, wasmRender as wasmRender_2, wasmPatch as wasmPatch_2} from "@/paseHtmleTemplate/wasm.ts";
 import {
-    wasmParse,
-    wasmRender,
-    wasmPatch,
-    __Internref10
-} from '@/paseHtmleTemplate/build/release'
+    wasmParse as wasmParse_2,
+    wasmRender as wasmRender_2,
+    wasmPatch as wasmPatch_2
+} from "@/paseHtmleTemplate/wasm.ts";
+// import {
+//     wasmParse,
+//     wasmRender,
+//     wasmPatch,
+//     __Internref10
+// } from '@/paseHtmleTemplate/build/release'
 
 
 export const targetMap: WeakMap<
@@ -415,6 +419,9 @@ const proxyErrorHandlers = {
     },
 }
 
+// 缓存组件 模板对象
+// 相同组件 无需重复解析
+const cacheComponentParseStack = new Map();
 
 export function viewRender(
     template: string,
@@ -422,10 +429,15 @@ export function viewRender(
     methods: Record<string, any>,
     components: Record<string, any> | null = null,
     _props?: Record<string, any> | unknown,
-    onCycleCallbacks?: CycleCallbacks
+    onCycleCallbacks?: CycleCallbacks,
+    componentOriginalRef?: {
+        __uuid: string;
+    }
 ) {
     if (data.__KEY) return data.__KEY;
     let templateID: string;
+    let newTemplateString = template.trim();
+    let templateLen = newTemplateString.length;
     
     templateID = generateRandomHash(16);
     
@@ -446,30 +458,36 @@ export function viewRender(
     }
     componentMap.set(templateID, componentMess);
     data.__KEY = templateID;
-    
 
     let oldStack: any[] | null = null,
         prevStack: any[] | null = null;
-    // console.log(template.trim())
-    // let t = performance.now()
-    // wasm
-    let stack = wasmParse_2(template.trim(), templateID)
-    console.log(stack)
-    // let t2 = performance.now()
-    // console.log(t2- t, 'wasm')
-    //
-    // wasmParse_2(template.trim(), templateID)
-    // let t3 = performance.now()
-    // console.log(t3 - t2, 'js')
+
+    let stack: any;
+    // 800 长度字符为边际, 大于则缓存
+    // 后续将存储 indexDB 中
+    if (templateLen >= 800 && componentOriginalRef) {
+        let componentUuid = componentOriginalRef.__uuid;
+        if (cacheComponentParseStack.has(componentUuid)) {
+            stack = cacheComponentParseStack.get(componentUuid);
+        }
+        else {
+            // wasm
+            stack = wasmParse_2(newTemplateString);
+            cacheComponentParseStack.set(componentUuid, stack);
+        }
+    }
+    else {
+        stack = wasmParse_2(newTemplateString);
+    }
+
     function updateComponent(updates: Dep[]) {
-        console.info("本轮updates ==> ", updates);
         if (updates.length) {
             // @ts-ignore
             componentMap.set('_lastUpdate', [...updates]);
         }
         if (oldStack === null) {
             // wasm
-            prevStack = wasmRender_2(stack);
+            prevStack = wasmRender_2(stack, templateID);
         }
         // diff
         else {

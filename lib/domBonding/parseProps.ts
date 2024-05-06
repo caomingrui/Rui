@@ -20,6 +20,7 @@ export function getPropsValue(
 ): PropsType {
     let props_list = props_string.split('"')
         .filter(l => l);
+
     const value: PropsType = {};
     for (let i = 0; i < props_list.length; i+=2) {
         let k = props_list[i].substring(0, props_list[i].indexOf('=')).trim();
@@ -45,7 +46,7 @@ export function getPropsValue(
             }
             else if (n1 === ':') {
                 let bind = value.bind || (value.bind = {});
-                bind[k.slice(1)] = data;
+                bind[k.slice(1)] = data ?? v;
             } else {
                 let attr = value.attr || (value.attr = {});
                 attr[k] = data;

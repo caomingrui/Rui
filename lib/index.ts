@@ -1,7 +1,7 @@
 import {getElementInProgress, setActionElementId, setElementInProgress} from "./domBonding";
 import { ComponentKey, ReactiveEffect, baseHandlers, targetMap, viewRender } from "./proxyBonding";
 import { ReactiveEffectType } from "./types/proxyBonding";
-import { isFunction, isObject } from "./utils";
+import {generateRandomHash, isFunction, isObject} from "./utils";
 
 export function reaction<T>(data: T) {
     if (!data) throw new Error("data is not")
@@ -164,10 +164,12 @@ export function Component(callback: (
             instance.methods,
             instance.components,
             proxyProps,
-            cycleCallbacks
+            cycleCallbacks,
+            h
         );
     }
     h.__type = ComponentKey
+    h.__uuid = generateRandomHash(8);
     return h;
 }
 

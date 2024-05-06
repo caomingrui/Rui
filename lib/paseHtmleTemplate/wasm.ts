@@ -55,14 +55,14 @@ class CreateElement {
 }
 
 
-function createText(templateKEY: string, text: string) {
-    let e = new CreateElement("text", '', [], templateKEY);
+function createText(text: string) {
+    let e = new CreateElement("text", '', []);
     e.setText(text);
     return e;
 }
 
-function createTemplate(templateKEY: string, tem: string) {
-    let e = new CreateElement("template", '', [], templateKEY);
+function createTemplate(tem: string) {
+    let e = new CreateElement("template", '', []);
     e.setText(tem);
     return e;
 }
@@ -107,10 +107,10 @@ class ElementStack {
     }
 }
 
-export function wasmParse(html_s: string, templateKEY: string): ElementStack {
+export function wasmParse(html_s: string): CreateElement[] {
     const Identifier = new ParseIdentifier();
     const stack = new ElementStack();
-    let element = new CreateElement(null, '', [], templateKEY);
+    let element = new CreateElement(null, '', []);
 
     let len = html_s.length;
     let elId: number = 0;
@@ -155,12 +155,12 @@ export function wasmParse(html_s: string, templateKEY: string): ElementStack {
 
             if (child_text != "") {
                 child_s && child_s.push(
-                    createText(templateKEY, child_text)
+                    createText(child_text)
                 );
                 child_text = "";
             }
             child_s && child_s.push(
-                createTemplate(templateKEY, tem)
+                createTemplate(tem)
             )
 
             templateName = null;
@@ -179,7 +179,7 @@ export function wasmParse(html_s: string, templateKEY: string): ElementStack {
                 if (child_text != "" && child_text.trim() != '') {
                     let lastStack = stack.lastStack();
                     lastStack.pushSingleChild(
-                        createText(templateKEY, child_text.trim())
+                        createText(child_text.trim())
                     );
                     child_text = ""
                 }
@@ -188,7 +188,7 @@ export function wasmParse(html_s: string, templateKEY: string): ElementStack {
                 if (child_text != "" && child_text.trim() != '') {
                     let element = stack.lastStack();
                     element.pushSingleChild(
-                        createText(templateKEY, child_text.trim())
+                        createText(child_text.trim())
                     );
                     child_text = ""
                 }
@@ -197,11 +197,11 @@ export function wasmParse(html_s: string, templateKEY: string): ElementStack {
             if (openOrCloseState === Identifier.LEFT) {
                 tag = "";
                 elId += 1;
-                element = new CreateElement(null, '', [], templateKEY);
+                element = new CreateElement(null, '', []);
 
                 if (child_text.trim() != '') {
                     child_s && child_s.push(
-                        createText(templateKEY, child_text)
+                        createText(child_text)
                     );
                 }
                 child_text = "";
@@ -234,7 +234,7 @@ export function wasmParse(html_s: string, templateKEY: string): ElementStack {
                 if (child_text) {
                     if (child_text.trim() != '') {
                         child_s.push(
-                            createText(templateKEY, child_text)
+                            createText(child_text)
                         );
                     }
                     child_text = "";
@@ -278,16 +278,18 @@ function dfs(
     data: CreateElement,
     parent: string | null,
     index: number,
-    change: Responsive[]
+    change: Responsive[],
+    templateID: string
 ) {
     const {
         tagName,
         props,
         child,
-        KEY,
+        // KEY,
         text
     } = data;
-
+    let KEY = sumId(templateID);
+    data.KEY = KEY;
     let len = child.length;
     let elemFlags = DOM.createElement(tagName || '', props, KEY, parent, text || '', index);
 
@@ -327,18 +329,25 @@ function dfs(
             child[i],
             KEY,
             i,
-            change
+            change,
+            templateID
         );
     }
 }
 
-export function wasmRender(elems: CreateElement[]) {
+function sumId(templateID: string): string {
+    let id = templateID + '@@' + i;
+    i += 1;
+    return id;
+}
+
+export function wasmRender(elems: CreateElement[], templateID: string) {
     let change: Responsive[] = [];
     // console.log(getElementInProgress(), elem)
     let elem = elems[0];
-    DOM.startComponent(elem.KEY);
+    DOM.startComponent(sumId(templateID));
     // first render
-    dfs(elem, null, 0, change);
+    dfs(elem, null, 0, change, templateID);
     // console.log(getElementInProgress(), elem, lastElement);
     DOM.endComponent(
         lastElement.tagName || '',

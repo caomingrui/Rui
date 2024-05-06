@@ -29,6 +29,7 @@ import type {
     ForContent,
     ComponentMapType
 } from '../types/proxyBonding';
+import {RuiElement} from "@/types/paseHtmlTemplate.ts";
 
 
 let elementInProgress: null | any = null;
@@ -37,7 +38,7 @@ export let actionElementId: string | null = null;
 export let actionContent: ForContent[] = [];
 
 export const getElementInProgress = () => elementInProgress;
-export const setElementInProgress = (newElementInProgress: any) => (elementInProgress = newElementInProgress);
+export const setElementInProgress = (newElementInProgress: RuiElement) => (elementInProgress = newElementInProgress);
 
 export const getActionElementId = () => actionElementId;
 export const setActionElementId = (id: string | null) => (actionElementId = id);
@@ -64,7 +65,7 @@ const Context = Object.setPrototypeOf({
         return false;
     },
     
-    matchDictContext: function(elem: any, data: any) {
+    matchDictContext: function(elem: RuiElement, data: any) {
         // dict 标识
         const actions = elem.__childs;
         if (actions && actions.match(elem, data)) {
@@ -85,7 +86,7 @@ export const DOM = {
 
     createElement,
 
-    updateForChild(container: any, data: ElementType, deps: ListTemplateDepType[], indexMess: [number, number]) {
+    updateForChild(container: RuiElement, data: ElementType, deps: ListTemplateDepType[], indexMess: [number, number]) {
         let { text, isResponsiveElem, id, props, originTag, flags, listIndex, tag, parent } = data;
         let childNodes;
 
@@ -95,13 +96,13 @@ export const DOM = {
                 DOM.createElement(tag, props, id, parent, text, listIndex ?? null)
                 return;
         }
-        if (elementInProgress.__KEY === id) {
+        if (elementInProgress?.__KEY === id) {
             childNodes = elementInProgress;
         } else {
-            if (elementInProgress.childNodes.length) {
+            if (elementInProgress?.childNodes.length) {
                 childNodes = elementInProgress = elementInProgress.childNodes[0];
             } else {
-                let originComponentKey = getElementIdToTemplateId(elementInProgress.__KEY);
+                let originComponentKey = getElementIdToTemplateId(elementInProgress?.__KEY);
                 let next = elementInProgress, nextSibling;
                 while (!nextSibling && next) {
                     nextSibling = next.nextSibling || next.nextElementSibling;
@@ -156,7 +157,8 @@ export const DOM = {
 
     updateAttribute,
 
-    removeElement(el: any) {
+    removeElement(el: RuiElement) {
+        if (!el.parentNode) return;
         let list: string[] = [];
         const dfs = (c: any) => {
             if (!c) return;
@@ -176,6 +178,7 @@ export const DOM = {
         }
 
         dfs(el);
+
         el.parentNode.removeChild(el);
         list.forEach(l => {
             let id = getElementIdToTemplateId(l);
@@ -214,30 +217,30 @@ export function startComponent(elementId: string) {
         data.insertElem = document.body;
     } else {
         let content = actionContent[actionContent.length - 1] || {};
-        const achor: any = document.createTextNode("");
+        const anchor: Partial<RuiElement> = document.createTextNode("");
         if (content.type === "component") {
             // 存在响应式参数 给组件添加标识
             if (content.key === 'props' && Object.keys(content.val).length) {
-                elemSetTemplate(achor, content.id, UpdateAttributeFlags);
+                elemSetTemplate(anchor, content.id, UpdateAttributeFlags);
             }
-            achor.__KEY = content.id;
+            anchor.__KEY = content.id;
         }
         else {
-            achor.__KEY = elementId;
+            anchor.__KEY = elementId;
         }
-        achor.__type = ComponentKey;
+        anchor.__type = ComponentKey;
 
         // console.log(elementInProgress, elementId, '?????');
         if (isTextElement(elementInProgress)) {
-            elementInProgress.parentNode.insertBefore(achor, elementInProgress.nextSibling);
+            elementInProgress.parentNode.insertBefore(anchor, elementInProgress.nextSibling);
         } else {
-            elementInProgress.appendChild(achor);
-            elementInProgress = achor;
+            elementInProgress.appendChild(anchor);
+            elementInProgress = anchor;
         }
 
         // elementInProgress.__type = ComponentKey;
 
-        data.insertElem = achor;
+        data.insertElem = anchor;
         // elementInProgress.__type = ComponentKey;
         // data.insertElem = elementInProgress;
     }
@@ -256,7 +259,6 @@ export function endComponent(
     text: string,
     index: number
 ) {
-    console.log(elementInProgress, elementInProgress.__KEY, id)
     if (elementInProgress.__KEY != id) {
         createElement(tag, props, id, parent, text, index);
     }
@@ -316,13 +318,13 @@ export function createElement(
             // dict
             if (Context.matchDictContext(elem, records)) {
                 elementInProgress = parentElem;
-                parentElem.appendChild(elem);
+                parentElem.appendChild(<Node>elem);
                 return elem.__is_template;
             } else {
                 if (elementInProgress.__KEY === id && isTextElement(elementInProgress)) {
-                    parentElem.insertBefore(elem, elementInProgress);
+                    parentElem.insertBefore(<Node>elem, elementInProgress);
                 } else {
-                    parentElem.appendChild(elem);
+                    parentElem.appendChild(<Node>elem);
                 }
                 elementInProgress = elem;
             }
@@ -430,14 +432,14 @@ export function log(_s: string) {
     // console.log(s, 'log');
 }
 
-export function matchParent(parentId: string, elem = elementInProgress): Element {
-    if (elem.__KEY === parentId) {
+export function matchParent(parentId: string, elem = elementInProgress): RuiElement {
+    if (elem?.__KEY === parentId) {
         return elem;
     }
     // 是否匹配 组件插入位置的text节点
     else if (
-        elem.nextSibling && 
-        isTextElement(elem.nextSibling) &&
+        elem?.nextSibling &&
+        isTextElement(elem?.nextSibling) &&
         parentId === elem.nextSibling.__KEY
     ) {
         return elem;
@@ -449,10 +451,11 @@ export function matchParent(parentId: string, elem = elementInProgress): Element
 
 
 
-export function addElementFlags(element: any, flags: number) {
+export function addElementFlags(element: Partial<RuiElement>, flags: number) {
     if (!isNumber(element.__is_template)) {
         element.__is_template = NoFlags;
     }
+    // @ts-ignore
     element.__is_template |= flags;
     return element;
 }
@@ -492,12 +495,12 @@ export function matchTemplate(
     let parseTemplate = Object.create(ParseTemplate);
 
     if (com_proxy) {
-        const fn = (_proxy: any, methods: any) => {
+        const fn = (_proxy: unknown, methods: Record<string, any>) => {
             actionElementId = id;
             let match = parseTemplate.getMatchData();
             if(isFunction(match)) {
                 return {
-                    fn: (...args: any) => {
+                    fn: (...args: any[]) => {
                         let data = match.call(methods, ...args);
                         actionElementId = null;
                         return data;
@@ -551,7 +554,7 @@ export function createVNodeElm(
     parent: string,
     listIndex: null | number = null
 ) {
-    let elem: any;
+    let elem: Partial<RuiElement> | null;
     let prveProps = getPropsValue(props, id, listIndex);
     
     switch (tag) {
@@ -587,12 +590,12 @@ export function createVNodeElm(
 
 function createElementComponent(tagName: string, id: string, parent: string, props: PropsType) {
     let Component = matchChildTag(id, tagName);
-    if (props.dict && id != elementInProgress.__KEY) {
+    if (props.dict && elementInProgress && id != elementInProgress.__KEY) {
         return document.createTextNode('');
     }
     if (isFunction(Component) && Component.__type === ComponentKey) {
         try {
-            if (!(elementInProgress.__KEY === id && isTextElement(elementInProgress))) {
+            if (!(elementInProgress && elementInProgress.__KEY === id && isTextElement(elementInProgress))) {
                 elementInProgress = matchParent(parent, elementInProgress);
             }
             let newProps = {
@@ -627,7 +630,7 @@ export function matchChildTag(id: string, tagName: string) {
 }
 
 
-function elemSetTemplate(element: HTMLElement | Text, id: string, flags: number) {
+function elemSetTemplate(element: Partial<RuiElement>, id: string, flags: number) {
     addElementFlags(element, flags);
     let templateID = getElementIdToTemplateId(id);
     const templateData = componentMap.get(templateID);

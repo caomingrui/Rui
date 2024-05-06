@@ -105,6 +105,23 @@ const Child_2 = Component((instance, props) => {
 
     return `
         <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
+        <div>child: props -- ({ label }) --</div>
     `;
 })
 
@@ -152,6 +169,31 @@ const Example = Component((instance, props) => {
   return (`<div>                             
             <div>
                 <input @keyup="handleKeyup"></input>
+                <Child_2 :label="1"></Child_2>
+                <Child_2 :label="2"></Child_2>
+                <Child_2 :label="3"></Child_2>
+                <Child_2 :label="4"></Child_2>
+                <Child_2 :label="5"></Child_2>
+                <Child_2 :label="1"></Child_2>
+                <Child_2 :label="2"></Child_2>
+                <Child_2 :label="3"></Child_2>
+                <Child_2 :label="4"></Child_2>
+                <Child_2 :label="5"></Child_2>
+                <Child_2 :label="1"></Child_2>
+                <Child_2 :label="2"></Child_2>
+                <Child_2 :label="3"></Child_2>
+                <Child_2 :label="4"></Child_2>
+                <Child_2 :label="5"></Child_2>
+                <Child_2 :label="1"></Child_2>
+                <Child_2 :label="2"></Child_2>
+                <Child_2 :label="3"></Child_2>
+                <Child_2 :label="4"></Child_2>
+                <Child_2 :label="5"></Child_2>
+                <Child_2 :label="1"></Child_2>
+                <Child_2 :label="2"></Child_2>
+                <Child_2 :label="3"></Child_2>
+                <Child_2 :label="4"></Child_2>
+                <Child_2 :label="5"></Child_2>
             </div>
             <div v-for="item in list">
                  <div>

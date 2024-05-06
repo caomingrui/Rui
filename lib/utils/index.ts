@@ -21,8 +21,8 @@ export function isNumber<T>(number: T): boolean {
 }
 
 
-export function isTextElement(elem: Element): boolean {
-    return elem.nodeType === 3
+export function isTextElement(elem: Element | null): boolean {
+    return elem?.nodeType === 3
 }
 
 // 根据插入位置 同步组件id
