@@ -90,33 +90,39 @@ const Child = Component((instance, props) => {
     `)
 })
 
+
+const Child_2 = Component((instance, props) => {
+
+    const {
+        useBefored
+    } = instance.init(reaction({
+        ...props
+    }))
+
+    useBefored(() => {
+        console.log('useBefored,', props)
+    })
+
+    return `
+        <div>child: props -- ({ label }) --</div>
+    `;
+})
+
 // 示例
 const Example = Component((instance, props) => {
   const data = reaction({
       name: '彩虹哔哔哔',
       dels: {a: { b: 2}},
       bool: false,
-      list: Array.from({ length: 4 }, (_, i) => ({
-          data: '123',
-          a: 1,
-          b: 2,
-          c: {
-              b: {
-                  c: {
-                      d: 123
-                  }
-              }
-          },
-          id: i + 1
-      })),
-      number:1
+      list: [],
+
   });
   const {
       methods,
       useMounted
   } = instance.init(() => ({
     data,
-    components: { Child }
+    components: { Child, Child_2 }
   }));
 
   useMounted(() => {
@@ -127,30 +133,16 @@ const Example = Component((instance, props) => {
     console.log(newV, oldV);
   });
 
-  methods.handleSum = () => {
-      data.number += 1
+  methods.handleKeyup = function (event) {
+      if (event.key === 'Enter') {
+          data.list = data.list.concat({ label: event.target.value, id: data.list + 1 });
+          console.log(data.list)
+      }
   }
 
-  methods.computeTest = function() {
-      return Object.values(data.dels).length
-  }
-
-  methods.handleCancelDel = function () {
-      let d = this.computeTest();
-      console.log(d)
-      data.name = 'cmr';
-    //   data.bool = !data.bool;
-    data.number += 1;
-  }
-  methods.spanClass = function () {
-      return data.bool ? 'error' : 'success'
-  }
-  methods.test = function () {
-      let cloneList = [...data.list];
-      data.list = [cloneList[3], cloneList[2], cloneList[0], cloneList[1]]
-  }
-  methods.testBind = function(...item: any) {
-    console.log(item);
+  methods.handleDEL = function (item) {
+      console.log(item);
+      data.list = data.list.filter(l => l.id != item.id);
   }
 
   methods.cbb = function(aa: string) {
@@ -158,14 +150,17 @@ const Example = Component((instance, props) => {
   }
 
   return (`<div>                             
-            <p v-if='bool'>我是bool-v-if</p>
-            { name }
-            <Child :data="name" :bool="bool" @cb="cbb"></Child>
-            <Child v-show="bool"></Child>
-            
-            <button class="mt-but" @click="handleCancelDel">显示隐藏</button>
-            <Child v-if-new="bool"></Child>
-            <p>............{ bool }...............</p>
+            <div>
+                <input @keyup="handleKeyup"></input>
+            </div>
+            <div v-for="item in list">
+                 <div>
+                    <p>------- { item.label } ---------</p>
+                    <Child_2 :label="item.label"></Child_2>
+                    <button @click="handleDEL.bind(null, item)">del</button>         
+                </div>     
+            </div>
+            <span>END</span>
         </div>`)
 });
 

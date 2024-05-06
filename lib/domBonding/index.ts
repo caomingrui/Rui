@@ -6,6 +6,7 @@ import {
     UpdateComponentFlags
 } from "../proxyBonding/flages";
 import {
+    getListStartIndex,
     isFunction,
     isNumber,
     isTextElement,
@@ -91,7 +92,7 @@ export const DOM = {
         switch (flags) {
             case 'ADD':
                 // DOM.ts.createForChild(elementInProgress, data);
-                DOM.createElement(tag, props, id, parent, text, listIndex || null)
+                DOM.createElement(tag, props, id, parent, text, listIndex ?? null)
                 return;
         }
         if (elementInProgress.__KEY === id) {
@@ -255,6 +256,7 @@ export function endComponent(
     text: string,
     index: number
 ) {
+    console.log(elementInProgress, elementInProgress.__KEY, id)
     if (elementInProgress.__KEY != id) {
         createElement(tag, props, id, parent, text, index);
     }
@@ -395,20 +397,25 @@ export function updateList(elementId: string, _depsStr: string) {
         let newList = data.data[val];
         actionContent.push({key, val, id: elementId, type: 'for'});
         try {
-            let locateMap = patchList(activeEl, oldList, newList);
-            newList = newList.map((res: Record<string, any>, ind: number) => {
+            let locateMap = patchList(activeEl.previousSibling, oldList, newList);
+            let newList2 = newList.map((res: Record<string, any>, ind: number) => {
                 let map = locateMap.get(ind) || {};
-                return {...res, ...map}
+                return {[key]: res, ...map}
             });
-            // BUG
-            elementInProgress = activeEl.previousSibling.childNodes[0] || {};
-            // BUG 不优雅
-            let star = Number(elementInProgress.__KEY.split('@@')[1].split('-')[0])
+
+            if (activeEl.previousSibling.childNodes.length) {
+                elementInProgress = activeEl.previousSibling.childNodes[0] || {};
+            }
+            else {
+                elementInProgress = activeEl.previousSibling || {};
+            }
+
+            let star = getListStartIndex(elementInProgress.__KEY);
             let forDeps = data.listDeps.get(elementId);
             if (!forDeps) return;
             let deps = forDeps.list
                 .filter(l => lastUpdates.find(d => d.key === l.text));
-            renderList(originChild, newList, key, star).forEach((c, ind) => {
+            renderList(originChild, newList2, key, star).forEach((c, ind) => {
                 DOM.updateForChild(activeEl, c, deps, [originChild.length, ind]);
             });
         }

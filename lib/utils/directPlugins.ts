@@ -12,14 +12,14 @@ import { renderList } from "../proxyBonding";
 import { Stack } from "./index.js";
 
 export const directPlugins = {
-    'v-if': (container: any, data: any, originValue: string, isFirstRender: boolean) => {
+    'v-if': (container: any, data: any, _originValue: string, _isFirstRender: boolean) => {
 
         if (!container.__childs) {
             const ifDict = {
                 collectCallback: function({ payload }: any) {
                     container.__payload = payload;
                 },
-                match: function(this: any, elem: any, data: any) {
+                match: function(this: any, elem: any, _data: any) {
                     if (elem.__v_if) {
                         return true;
                     }
@@ -155,7 +155,7 @@ export const directPlugins = {
                 collectCallback: function({ payload }: any) {
                     container.__payload = payload;
                 },
-                match: function(this: any, elem: any, data: any) {
+                match: function(this: any, elem: any, _data: any) {
                     return !!elem.__v_show;
 
                 }
@@ -227,7 +227,7 @@ export const directPlugins = {
             }
         }
     },
-    'v-for': (container: any, data: any, originValue: string) => {
+    'v-for': (container: any, _data: any, originValue: string) => {
         let [key, val] = originValue.split('in').map(l => l.trim());
         let list = matchTemplate(container.__KEY, val);
         if (!list) return;
@@ -238,6 +238,7 @@ export const directPlugins = {
                     container.__payload = payload;
                     const { el, child, ...args } = payload;
                     let newChild = el.__v_originChild = child.slice();
+                    if (!newChild.length) return
                     let copyElement = getElementInProgress();
                     try {
                         setElementInProgress(el);

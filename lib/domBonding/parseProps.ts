@@ -21,23 +21,22 @@ export function getPropsValue(
     let props_list = props_string.split('"')
         .filter(l => l);
     const value: PropsType = {};
-
     for (let i = 0; i < props_list.length; i+=2) {
         let k = props_list[i].substring(0, props_list[i].indexOf('=')).trim();
+        if (k === '') continue;
         let v = props_list[i + 1].trim();
         let n1 = k.slice(0,1), n2 = k.slice(0, 2);
 
         let match = matchTemplate(elemKey, v, listIndex);
-        if (!match) continue;
 
         if (n1 === '@' || n2 === 'on') {
             let events = value.events || (value.events = {});
             let index = n1 === '@'? 1: 2
-            events[k.slice(index)] = match.fn;
+            events[k.slice(index)] = match?.fn;
         }
         else {
-            let data = match.data;
-            if (match.fn) {
+            let data = match?.data;
+            if (match?.fn) {
                 data = match.fn();
             }
             if (n2 === 'v-') {

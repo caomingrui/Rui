@@ -10,12 +10,14 @@ import type {
 } from '../types/proxyBonding';
 import { ParseTemplate, generateRandomHash, isPromise, runWithCycleCallback } from '@/utils';
 import scheduler, { promise } from '../utils/scheduler';
+import {wasmParse as wasmParse_2, wasmRender as wasmRender_2, wasmPatch as wasmPatch_2} from "@/paseHtmleTemplate/wasm.ts";
 import {
     wasmParse,
     wasmRender,
     wasmPatch,
     __Internref10
 } from '@/paseHtmleTemplate/build/release'
+
 
 export const targetMap: WeakMap<
     Object,
@@ -369,7 +371,9 @@ export function renderList(child: any[], list: any[], for_param: string, startIn
                 if (parseTemplate.getFirstParam(text) === for_param) {
                     data.tag = 'text';
                     data.originTag = 'template'
-                    data.text = parseTemplate.getMatchData().toString();
+                    let d = parseTemplate.getMatchData()
+                    console.log(d, text, da)
+                    data.text = d.toString();
                 } else {
                     deps.add(dep);
                     data.isResponsiveElem = true;
@@ -444,10 +448,19 @@ export function viewRender(
     data.__KEY = templateID;
     
 
-    let oldStack: __Internref10[] | null = null,
-        prevStack: __Internref10[] | null = null;
+    let oldStack: any[] | null = null,
+        prevStack: any[] | null = null;
+    // console.log(template.trim())
+    // let t = performance.now()
     // wasm
-    let stack = wasmParse(template.trim(), templateID)
+    let stack = wasmParse_2(template.trim(), templateID)
+    console.log(stack)
+    // let t2 = performance.now()
+    // console.log(t2- t, 'wasm')
+    //
+    // wasmParse_2(template.trim(), templateID)
+    // let t3 = performance.now()
+    // console.log(t3 - t2, 'js')
     function updateComponent(updates: Dep[]) {
         console.info("本轮updates ==> ", updates);
         if (updates.length) {
@@ -456,12 +469,12 @@ export function viewRender(
         }
         if (oldStack === null) {
             // wasm
-            prevStack = wasmRender(stack);
+            prevStack = wasmRender_2(stack);
         }
         // diff
         else {
             // wasm
-            prevStack && wasmPatch(prevStack, updates.map(l => l.id).join('>>>'));
+            prevStack && wasmPatch_2(prevStack, updates.map(l => l.id).join('>>>'));
             
             onCycleCallbacks && runWithCycleCallback(onCycleCallbacks, 'useUpdated');
         }

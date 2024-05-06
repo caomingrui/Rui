@@ -171,14 +171,15 @@ export function Component(callback: (
     return h;
 }
 
+class CreateProject {
+    constructor(public elem: Element) {}
 
-function CreateProject(elem: Element) {
-    this.rootEl = elem;
-
-    this.render = function (fn) {
+    render(fn: Function) {
+        let t = performance.now()
+        console.info(t);
         let elementInProgress = getElementInProgress();
         try {
-            setElementInProgress(elem);
+            setElementInProgress(this.elem);
             fn();
         }
         catch (e) {
@@ -186,11 +187,12 @@ function CreateProject(elem: Element) {
         }
         finally {
             setElementInProgress(elementInProgress);
+            console.info(performance.now() - t);
         }
     }
 }
 
-export function createRoot(elem: Element, options) {
+export function createRoot(elem: Element | null): CreateProject {
     if (!elem) throw new Error('elem is null');
     return new CreateProject(elem);
 }

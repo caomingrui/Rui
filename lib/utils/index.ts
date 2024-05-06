@@ -1,7 +1,7 @@
 import { CycleCallbackFunctions, CycleCallbacks } from '..';
 import type { ParseTemplateThis } from '../types/paseHtmlTemplate'
 import { promise } from './scheduler';
-import {ComponentKey} from "../proxyBonding";
+import {ComponentKey} from "@/proxyBonding";
 
 
 export function isObject<T>(obj: T): boolean {
@@ -134,4 +134,13 @@ export function runWithCycleCallback(onCycleCallbacks: CycleCallbacks, funName: 
             });
         }
     }
+}
+
+
+export function getListStartIndex (key: string): number {
+    let idString = key.split('@@')[1];
+    if (idString.includes('-')) {
+        return Number(idString.split('-')[0]);
+    }
+    return 0;
 }

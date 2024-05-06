@@ -258,7 +258,7 @@ export function wasmParse(html_s: string, templateKEY: string): ElementStack {
         }
     }
 
-    return stack;
+    return stack.stack;
 }
 
 
@@ -292,11 +292,7 @@ function dfs(
     let elemFlags = DOM.createElement(tagName || '', props, KEY, parent, text || '', index);
 
     let primaryFlags = elemFlags & (UpdateTextFlags | UpdateAttributeFlags | UpdateForListFlags | JumpUpdateForChildFlags | UpdateComponentFlags);
-    // if (lastList && lastList.parent === parent) {
-    //     console.log('child', data, lastList, parent, 'JumpUpdateForChildFlags--JumpUpdateForChildFlags');
-    //     // DOM.ts.find(lastList.KEY);
-    //     lastList = null;
-    // }
+
 
     lastElement = {
         tagName, 
@@ -315,21 +311,12 @@ function dfs(
             break;
         case UpdateForListAndAttributeFlags:
         case UpdateForListFlags:
-            // lastList = {...data, parent};
             change.push(new Responsive('list', data));
             break;
         case UpdateComponentFlags:
             change.push(new Responsive('component', data));
             break;
         case JumpUpdateForChildFlags:
-
-            // if (lastList) {
-            //
-            //     if (lastList.parent === parent) {
-            //         // console.log('child', data, lastList, parent, 'JumpUpdateForChildFlags--JumpUpdateForChildFlags');
-            //         // lastList = null;
-            //     }
-            // }
             break;
         default:
             break;
@@ -345,9 +332,10 @@ function dfs(
     }
 }
 
-export function wasmRender(elem: CreateElement) {
+export function wasmRender(elems: CreateElement[]) {
     let change: Responsive[] = [];
     // console.log(getElementInProgress(), elem)
+    let elem = elems[0];
     DOM.startComponent(elem.KEY);
     // first render
     dfs(elem, null, 0, change);
@@ -363,7 +351,7 @@ export function wasmRender(elem: CreateElement) {
 }
 
 
-export function wasmPacth(current: Responsive[], updatesStr: string) {
+export function wasmPatch(current: Responsive[], updatesStr: string) {
     let updates = updatesStr.split('>>>').filter(l => l);
     return diff2(current, updates);
 }
